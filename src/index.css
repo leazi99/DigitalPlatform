@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette — drawn from the company flyer: flyer cyan on a cool mist ground,
+     deep navy for inverted bands. One accent only. */
+  --color-ink: #0b1b2b;
+  --color-ink-soft: #3f5162;
+  --color-mist: #eef3f5;
+  --color-mist-deep: #e2eaee;
+  --color-signal: #12a5ce;
+  --color-signal-deep: #0a6e8c;
+  --color-rule: #cbd9e0;
+
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-mega: clamp(2.6rem, 8vw, 6.5rem);
+  --text-mega--line-height: 0.86;
+  --text-mega--letter-spacing: -0.045em;
+
+  --text-display: clamp(2rem, 5.2vw, 3.75rem);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.035em;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+  }
+
+  body {
+    background-color: var(--color-mist);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-signal);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* The page is drawn like a growth chart: every band sits on faint
+     horizontal gradations, the way a y-axis reads behind a plotted line. */
+  .gridlines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--color-rule) 0,
+      var(--color-rule) 1px,
+      transparent 1px,
+      transparent 5.5rem
+    );
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+    opacity: 0.55;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+}
+
+/* Scroll reveal — opt-in, and inert when the visitor asks for less motion. */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
