@@ -1,6 +1,6 @@
 import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
-import { course } from "../../data/institute";
+import { useInstitute } from "../../content/useContent";
 
 /** The dark band — the agency page uses it for its numbers, the academy for
  *  the facts a prospective student checks before reading anything else. */
@@ -14,6 +14,13 @@ const FACTS = [
 ];
 
 export default function CourseCard() {
+  const { course } = useInstitute();
+
+  // No course is published, so there are no facts to state. The section is
+  // dropped rather than filled with blanks — an empty "Fee" row reads as an
+  // oversight, and inventing one would be worse.
+  if (!course) return null;
+
   return (
     <section id="course" className="bg-ink py-20 text-white sm:py-24">
       <Container>

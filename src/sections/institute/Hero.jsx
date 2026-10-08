@@ -1,9 +1,10 @@
 import Container from "../../components/Container";
 import Button from "../../components/Button";
 import GrowthCurve from "../../components/GrowthCurve";
-import { hero, course, batches } from "../../data/institute";
+import { useInstitute } from "../../content/useContent";
 
 export default function Hero() {
+  const { hero, course, batches } = useInstitute();
   const next = batches[0];
 
   return (
@@ -68,9 +69,11 @@ export default function Hero() {
 
           <div className="relative min-w-0">
             <GrowthCurve className="w-full" />
-            <p className="mt-2 text-center font-mono text-[0.625rem] uppercase tracking-[0.18em] text-ink-soft/70">
-              {course.duration} · six modules · one live project
-            </p>
+            {course && (
+              <p className="mt-2 text-center font-mono text-[0.625rem] uppercase tracking-[0.18em] text-ink-soft/70">
+                {course.duration} · six modules · one live project
+              </p>
+            )}
           </div>
         </div>
       </Container>

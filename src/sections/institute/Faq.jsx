@@ -2,9 +2,11 @@ import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import Disclosure from "../../components/Disclosure";
-import { faq } from "../../data/institute";
+import { useInstitute } from "../../content/useContent";
 
 export default function Faq() {
+  const { faq } = useInstitute();
+
   return (
     <section id="faq" className="border-y border-rule bg-mist-deep/60 py-24 sm:py-32">
       <Container>

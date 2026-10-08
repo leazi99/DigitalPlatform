@@ -34,9 +34,9 @@ export default function Header() {
         <Link
           to={sector ? sector.path : "/"}
           className="shrink-0"
-          aria-label={sector ? `Digital World ${sector.suffix} — back to top` : "Digital World — home"}
+          aria-label="Digital World — home"
         >
-          <Logo suffix={sector?.suffix} />
+          <Logo />
         </Link>
 
         {sector && (

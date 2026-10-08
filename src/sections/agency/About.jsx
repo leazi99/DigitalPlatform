@@ -1,10 +1,12 @@
 import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
-import { company } from "../../data/company";
-import { about } from "../../data/agency";
+import { useAgency, useCompany } from "../../content/useContent";
 
 export default function About() {
+  const { about } = useAgency();
+  const company = useCompany();
+
   return (
     <section id="about" className="relative py-24 sm:py-32">
       <div aria-hidden="true" className="gridlines pointer-events-none absolute inset-0" />

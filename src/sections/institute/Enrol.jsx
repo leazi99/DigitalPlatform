@@ -4,10 +4,9 @@ import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import Field, { fieldClass } from "../../components/Field";
 import { SuccessPanel, ErrorPanel, SubmitButton } from "../../components/FormStatus";
-import { submitEnquiry } from "../../lib/submitEnquiry";
-import { formEndpoints } from "../../config";
-import { company } from "../../data/company";
-import { enrol, batches, course } from "../../data/institute";
+import { submitEnrolment } from "../../lib/submitEnquiry";
+import { trackEvent } from "../../lib/track";
+import { useCompany, useInstitute } from "../../content/useContent";
 
 const EMPTY = { name: "", email: "", phone: "", batch: "", message: "" };
 
@@ -26,6 +25,9 @@ function validate(values) {
 }
 
 export default function Enrol() {
+  const { enrol, course } = useInstitute();
+  const company = useCompany();
+
   return (
     <section id="enrol" className="relative py-24 sm:py-32">
       <div aria-hidden="true" className="gridlines pointer-events-none absolute inset-0" />
@@ -37,24 +39,29 @@ export default function Enrol() {
 
             <Reveal delay={200}>
               <dl className="mt-12 space-y-6 border-t border-rule pt-8">
-                <div>
-                  <dt className="eyebrow text-ink-soft">Course</dt>
-                  <dd className="mt-2 font-display text-lg font-bold tracking-tight text-ink">
-                    {course.title}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="eyebrow text-ink-soft">Fee</dt>
-                  <dd className="mt-2 font-display text-lg font-bold tracking-tight text-ink">
-                    {course.fee}
-                  </dd>
-                  <dd className="mt-1 text-[0.9375rem] text-ink-soft">{course.instalments}</dd>
-                </div>
+                {course && (
+                  <>
+                    <div>
+                      <dt className="eyebrow text-ink-soft">Course</dt>
+                      <dd className="mt-2 font-display text-lg font-bold tracking-tight text-ink">
+                        {course.title}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="eyebrow text-ink-soft">Fee</dt>
+                      <dd className="mt-2 font-display text-lg font-bold tracking-tight text-ink">
+                        {course.fee}
+                      </dd>
+                      <dd className="mt-1 text-[0.9375rem] text-ink-soft">{course.instalments}</dd>
+                    </div>
+                  </>
+                )}
                 <div>
                   <dt className="eyebrow text-ink-soft">Ask first</dt>
                   <dd className="mt-2">
                     <a
                       href={`tel:${company.phone.replace(/\s/g, "")}`}
+                      onClick={() => trackEvent("phone_click", { where: "enrol" })}
                       className="font-display text-lg font-bold tracking-tight text-ink underline decoration-signal decoration-2 underline-offset-4 transition-colors hover:text-signal-deep"
                     >
                       {company.phone}
@@ -76,15 +83,23 @@ export default function Enrol() {
 }
 
 function EnrolForm() {
+  const { batches, course } = useInstitute();
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState("");
   const [sent, setSent] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   const update = (field) => (event) => {
     setValues((v) => ({ ...v, [field]: event.target.value }));
     setErrors((e) => (e[field] ? { ...e, [field]: undefined } : e));
+
+    // Worth knowing how many visitors start the form and do not finish it.
+    if (!touched) {
+      setTouched(true);
+      trackEvent("form_start", { form: "enrol" });
+    }
   };
 
   async function handleSubmit(event) {
@@ -99,13 +114,18 @@ function EnrolForm() {
     setFailure("");
     setBusy(true);
     try {
-      await submitEnquiry(
-        { ...values, _subject: `Course enrolment — ${course.title}`, sector: "institute" },
-        formEndpoints.institute,
-      );
+      await submitEnrolment(values);
+      trackEvent("form_submit", { form: "enrol", batch: values.batch || "unsure" });
       setSent(true);
       setValues(EMPTY);
+      setTouched(false);
     } catch (error) {
+      // The server validates the same rules again. If it disagrees with the
+      // browser, its messages win and are shown per field.
+      if (error.fields) {
+        setErrors(error.fields);
+        document.getElementById(`field-${Object.keys(error.fields)[0]}`)?.focus();
+      }
       setFailure(error.message);
     } finally {
       setBusy(false);
@@ -163,21 +183,23 @@ function EnrolForm() {
             </Field>
           </div>
 
-          <Field id="batch" label="Which batch suits you?" hint="Optional">
-            <select
-              id="field-batch"
-              value={values.batch}
-              onChange={update("batch")}
-              className={`${fieldClass} border-rule`}
-            >
-              <option value="">Not sure yet — advise me</option>
-              {batches.map((batch) => (
-                <option key={batch.name} value={batch.name}>
-                  {batch.name} — {batch.timing}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {batches.length > 0 && (
+            <Field id="batch" label="Which batch suits you?" hint="Optional">
+              <select
+                id="field-batch"
+                value={values.batch}
+                onChange={update("batch")}
+                className={`${fieldClass} border-rule`}
+              >
+                <option value="">Not sure yet — advise me</option>
+                {batches.map((batch) => (
+                  <option key={batch.id ?? batch.name} value={batch.name}>
+                    {batch.name} — {batch.timing}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
 
           <Field id="message" label="Anything we should know?" hint="Optional">
             <textarea
@@ -191,7 +213,7 @@ function EnrolForm() {
           </Field>
 
           <SubmitButton busy={busy} busyLabel="Sending…">
-            Request a seat
+            {course ? "Request a seat" : "Register your interest"}
           </SubmitButton>
 
           <p className="text-[0.8125rem] leading-relaxed text-ink-soft">

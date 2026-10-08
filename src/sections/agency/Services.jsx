@@ -2,9 +2,11 @@ import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import ServiceGlyph from "../../components/ServiceGlyph";
-import { services } from "../../data/agency";
+import { useAgency } from "../../content/useContent";
 
 export default function Services() {
+  const { services } = useAgency();
+
   return (
     <section id="services" className="border-y border-rule bg-mist-deep/60 py-24 sm:py-32">
       <Container>

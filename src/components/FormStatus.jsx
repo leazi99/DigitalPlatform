@@ -1,4 +1,4 @@
-import { company } from "../data/company";
+import { useCompany } from "../content/useContent";
 
 /**
  * The panel shown after a form is submitted — success or failure.
@@ -7,6 +7,8 @@ import { company } from "../data/company";
  * the visitor should still be able to reach the business.
  */
 export function SuccessPanel({ heading, body, onReset, resetLabel }) {
+  const company = useCompany();
+
   return (
     <div className="flex min-h-[24rem] flex-col items-start justify-center">
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal/12 text-signal">
@@ -34,6 +36,8 @@ export function SuccessPanel({ heading, body, onReset, resetLabel }) {
 }
 
 export function ErrorPanel({ message }) {
+  const company = useCompany();
+
   return (
     <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4">
       <p className="text-[0.875rem] leading-relaxed text-red-800">{message}</p>

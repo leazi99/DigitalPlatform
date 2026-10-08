@@ -1,9 +1,11 @@
 import Container from "../../components/Container";
 import Counter from "../../components/Counter";
 import Reveal from "../../components/Reveal";
-import { stats } from "../../data/agency";
+import { useAgency } from "../../content/useContent";
 
 export default function Stats() {
+  const { stats } = useAgency();
+
   return (
     <section className="bg-ink py-16 text-white sm:py-20">
       <Container>

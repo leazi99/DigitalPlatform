@@ -1,40 +1,62 @@
 /**
- * The site's only network call: posts a form's values to its endpoint.
+ * The two public forms: the academy's enrolment request and the agency's
+ * enquiry.
  *
- * Both the agency enquiry form and the academy enrolment form go through
- * here, so retries, error wording and the "not configured" case are handled
- * in one place rather than duplicated per form.
+ * Both are stored in our own database, which is what makes them appear in the
+ * admin panel. The Formspree endpoints are now optional: set them and a copy
+ * of the submission is also emailed, leave them blank and the database row is
+ * the only record. Emailing is treated as the copy, not the original — an
+ * email that fails to send must not lose an enrolment.
  *
- * Resolves on success. Throws an Error with a message written for the
- * visitor to read — never a raw status code.
+ * Each submission carries the visitor's session id where there is one, so the
+ * admin can see which visit turned into an enquiry. It is the same random id
+ * the visitor log uses, and it identifies a browser session, not a person.
  */
-export async function submitEnquiry(values, endpoint) {
-  if (!endpoint) {
-    throw new Error(
-      "This form is not connected yet. Please email or call us instead — we will reply just as quickly.",
-    );
-  }
 
-  let response;
-  try {
-    response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(values),
-    });
-  } catch {
-    // Offline, DNS failure, blocked request — the visitor cannot fix any of
-    // these, so point them at a route that does not depend on us.
-    throw new Error(
-      "We could not reach the server. Check your connection, or email or call us directly.",
-    );
-  }
+import { post } from "./api";
+import { formEndpoints } from "../config";
+import { currentSessionId } from "./track";
 
-  if (!response.ok) {
-    throw new Error(
-      "Something went wrong sending that. Please try again, or email or call us directly.",
-    );
-  }
+/** POST /api/enrol — a seat request for the course. */
+export async function submitEnrolment(values) {
+  const result = await post(
+    "/enrol",
+    { ...values, sessionId: currentSessionId() },
+    { auth: false },
+  );
+  emailCopy(formEndpoints.institute, {
+    ...values,
+    sector: "institute",
+    _subject: "Course enrolment request",
+  });
+  return result;
+}
 
-  return { ok: true };
+/** POST /api/enquiries — an enquiry from the agency's contact form. */
+export async function submitAgencyEnquiry(values) {
+  const result = await post(
+    "/enquiries",
+    { ...values, sector: "agency", sessionId: currentSessionId() },
+    { auth: false },
+  );
+  emailCopy(formEndpoints.agency, { ...values, sector: "agency", _subject: "Agency enquiry" });
+  return result;
+}
+
+/**
+ * Fire and forget. Deliberately not awaited and deliberately silent: the
+ * submission is already saved, so a failure here is ours to notice in the
+ * logs, not the visitor's to be told about after a successful send.
+ */
+function emailCopy(endpoint, values) {
+  if (!endpoint) return;
+
+  fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(values),
+    keepalive: true,
+  }).catch((error) => {
+    console.warn("The email copy of that submission did not send:", error.message);
+  });
 }

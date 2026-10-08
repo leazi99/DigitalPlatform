@@ -1,9 +1,11 @@
 import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
-import { testimonials } from "../../data/agency";
+import { useAgency } from "../../content/useContent";
 
 export default function Testimonials() {
+  const { testimonials } = useAgency();
+
   return (
     <section id="clients" className="border-y border-rule bg-mist-deep/60 py-24 sm:py-32">
       <Container>

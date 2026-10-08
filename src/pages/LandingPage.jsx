@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Container from "../components/Container";
 import Reveal from "../components/Reveal";
 import ServiceGlyph from "../components/ServiceGlyph";
-import { company, sectors } from "../data/company";
+import { useCompany, useContent } from "../content/useContent";
 
 /**
  * The fork in the road. Deliberately thin — no stats, no testimonials, no
@@ -10,6 +10,8 @@ import { company, sectors } from "../data/company";
  * in one click, so it must not give either sector anything to compete with.
  */
 export default function LandingPage() {
+  const { company, sectors } = useContent();
+
   return (
     <section className="relative flex min-h-screen items-center py-32">
       <div aria-hidden="true" className="gridlines pointer-events-none absolute inset-0" />
@@ -40,6 +42,8 @@ export default function LandingPage() {
 }
 
 function Door({ sector, glyph, delay }) {
+  const company = useCompany();
+
   return (
     <Reveal delay={delay}>
       <Link

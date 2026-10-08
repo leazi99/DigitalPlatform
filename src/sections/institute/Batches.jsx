@@ -2,7 +2,7 @@ import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
 import Button from "../../components/Button";
 import SectionHeading from "../../components/SectionHeading";
-import { batches, batchesSection, course } from "../../data/institute";
+import { useInstitute } from "../../content/useContent";
 
 const STATUS = {
   open: { label: "Open", className: "bg-signal/12 text-signal-deep" },
@@ -11,6 +11,8 @@ const STATUS = {
 };
 
 export default function Batches() {
+  const { batches, batchesSection, course } = useInstitute();
+
   return (
     <section id="batches" className="border-y border-rule bg-mist-deep/60 py-24 sm:py-32">
       <Container>
@@ -70,9 +72,11 @@ export default function Batches() {
           <Reveal delay={120}>
             <div className="mt-14 flex flex-wrap items-center gap-4 rounded-2xl border border-rule bg-mist p-8 sm:p-10">
               <Button href="#enrol">Register your interest</Button>
-              <p className="text-[0.9375rem] text-ink-soft">
-                Fee for the {course.duration} course: {course.fee}
-              </p>
+              {course && (
+                <p className="text-[0.9375rem] text-ink-soft">
+                  Fee for the {course.duration} course: {course.fee}
+                </p>
+              )}
             </div>
           </Reveal>
         )}

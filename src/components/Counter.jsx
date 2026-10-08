@@ -10,6 +10,11 @@ import { useEffect, useRef } from "react";
 export default function Counter({ value, suffix = "", decimals = 0, className = "" }) {
   const ref = useRef(null);
 
+  // The figures are admin-editable now, so what arrives here may not be a
+  // number. Anything unparseable counts as zero rather than throwing and
+  // taking the whole band down with it.
+  const target = Number.isFinite(Number(value)) ? Number(value) : 0;
+
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
@@ -20,7 +25,7 @@ export default function Counter({ value, suffix = "", decimals = 0, className = 
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced || typeof IntersectionObserver === "undefined") {
-      write(value);
+      write(target);
       return;
     }
 
@@ -35,7 +40,7 @@ export default function Counter({ value, suffix = "", decimals = 0, className = 
         const start = performance.now();
         const tick = (now) => {
           const t = Math.min(1, (now - start) / duration);
-          write(value * (1 - Math.pow(1 - t, 3)));
+          write(target * (1 - Math.pow(1 - t, 3)));
           if (t < 1) frame = requestAnimationFrame(tick);
         };
         frame = requestAnimationFrame(tick);
@@ -48,13 +53,13 @@ export default function Counter({ value, suffix = "", decimals = 0, className = 
       observer.disconnect();
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [value, suffix, decimals]);
+  }, [target, suffix, decimals]);
 
   // Server/first paint shows the final figure, so the number is never missing
   // if the tween cannot run.
   return (
     <span ref={ref} className={className}>
-      {value.toFixed(decimals)}
+      {target.toFixed(decimals)}
       {suffix}
     </span>
   );

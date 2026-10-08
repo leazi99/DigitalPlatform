@@ -2,9 +2,11 @@ import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import ServiceGlyph from "../../components/ServiceGlyph";
-import { outcomes } from "../../data/institute";
+import { useInstitute } from "../../content/useContent";
 
 export default function Outcomes() {
+  const { outcomes } = useInstitute();
+
   return (
     <section id="outcomes" className="relative py-24 sm:py-32">
       <div aria-hidden="true" className="gridlines pointer-events-none absolute inset-0" />

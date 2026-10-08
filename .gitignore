@@ -26,3 +26,8 @@ dist-ssr
 # local environment
 .env
 .env.local
+
+# the database — holds real enrolments, enquiries and the visitor log
+server/data.db
+server/data.db-shm
+server/data.db-wal

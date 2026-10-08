@@ -1,9 +1,11 @@
 import Container from "../../components/Container";
 import Button from "../../components/Button";
 import GrowthCurve from "../../components/GrowthCurve";
-import { hero } from "../../data/agency";
+import { useAgency } from "../../content/useContent";
 
 export default function Hero() {
+  const { hero } = useAgency();
+
   return (
     <section id="top" className="relative overflow-hidden pt-32 pb-20 sm:pt-40 lg:pb-28">
       <div aria-hidden="true" className="gridlines pointer-events-none absolute inset-0" />

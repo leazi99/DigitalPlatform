@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import Container from "../components/Container";
 import Logo from "../components/Logo";
-import { company, sectors, socials } from "../data/company";
+import { useContent } from "../content/useContent";
 import { useSector } from "./useSector";
 
 export default function Footer() {
+  const { company, sectors, socials } = useContent();
   const sector = useSector();
 
   return (

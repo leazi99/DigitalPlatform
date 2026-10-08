@@ -2,9 +2,11 @@ import Container from "../../components/Container";
 import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import Disclosure from "../../components/Disclosure";
-import { syllabus } from "../../data/institute";
+import { useInstitute } from "../../content/useContent";
 
 export default function Syllabus() {
+  const { syllabus } = useInstitute();
+
   return (
     <section id="syllabus" className="border-y border-rule bg-mist-deep/60 py-24 sm:py-32">
       <Container>

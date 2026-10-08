@@ -4,10 +4,9 @@ import Reveal from "../../components/Reveal";
 import SectionHeading from "../../components/SectionHeading";
 import Field, { fieldClass } from "../../components/Field";
 import { SuccessPanel, ErrorPanel, SubmitButton } from "../../components/FormStatus";
-import { submitEnquiry } from "../../lib/submitEnquiry";
-import { formEndpoints } from "../../config";
-import { company } from "../../data/company";
-import { contact, services } from "../../data/agency";
+import { submitAgencyEnquiry } from "../../lib/submitEnquiry";
+import { trackEvent } from "../../lib/track";
+import { useAgency, useCompany } from "../../content/useContent";
 
 const EMPTY = { name: "", email: "", phone: "", service: "", message: "" };
 
@@ -29,6 +28,9 @@ function validate(values) {
 }
 
 export default function Contact() {
+  const { contact } = useAgency();
+  const company = useCompany();
+
   return (
     <section id="contact" className="relative py-24 sm:py-32">
       <div aria-hidden="true" className="gridlines pointer-events-none absolute inset-0" />
@@ -56,6 +58,7 @@ export default function Contact() {
                   <dd className="mt-2">
                     <a
                       href={`tel:${company.phone.replace(/\s/g, "")}`}
+                      onClick={() => trackEvent("phone_click", { where: "contact" })}
                       className="font-display text-lg font-bold tracking-tight text-ink transition-colors hover:text-signal-deep"
                     >
                       {company.phone}
@@ -84,15 +87,23 @@ export default function Contact() {
 }
 
 function EnquiryForm() {
+  const { services } = useAgency();
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState("");
   const [sent, setSent] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   const update = (field) => (event) => {
     setValues((v) => ({ ...v, [field]: event.target.value }));
     setErrors((e) => (e[field] ? { ...e, [field]: undefined } : e));
+
+    // Worth knowing how many visitors start the form and do not finish it.
+    if (!touched) {
+      setTouched(true);
+      trackEvent("form_start", { form: "enquiry" });
+    }
   };
 
   async function handleSubmit(event) {
@@ -107,13 +118,18 @@ function EnquiryForm() {
     setFailure("");
     setBusy(true);
     try {
-      await submitEnquiry(
-        { ...values, _subject: "Agency enquiry", sector: "agency" },
-        formEndpoints.agency,
-      );
+      await submitAgencyEnquiry(values);
+      trackEvent("form_submit", { form: "enquiry", service: values.service || "unsure" });
       setSent(true);
       setValues(EMPTY);
+      setTouched(false);
     } catch (error) {
+      // The server validates the same rules again. If it disagrees with the
+      // browser, its messages win and are shown per field.
+      if (error.fields) {
+        setErrors(error.fields);
+        document.getElementById(`field-${Object.keys(error.fields)[0]}`)?.focus();
+      }
       setFailure(error.message);
     } finally {
       setBusy(false);
