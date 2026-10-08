@@ -18,7 +18,9 @@ export const config = {
   // The database file. Gitignored — it holds real enrolments and visitor logs.
   dbFile: process.env.DB_FILE
     ? resolve(root, process.env.DB_FILE)
-    : resolve(here, "data.db"),
+    : process.env.VERCEL
+      ? "/tmp/data.db"
+      : resolve(here, "data.db"),
 
   // Signs admin session tokens. Change it and every admin is logged out,
   // which is the right behaviour if you think a token has leaked.
@@ -38,7 +40,9 @@ export const config = {
 
   // Browser origins allowed to call the API. In dev the Vite server is on a
   // different port, so it has to be named explicitly.
-  origins: (process.env.CORS_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173")
+  origins: (
+    process.env.CORS_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173"
+  )
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),

@@ -146,9 +146,10 @@ visit turned into an enquiry and what that person read first.
 ## Deploying
 
 **This is no longer a static site.** It needs a host that runs Node and keeps
-a file on disk — Render, Railway, Fly, or any VPS. Netlify and Vercel's static
-hosting cannot run it; `public/_redirects` and `vercel.json` are left in place
-for the client-side routing they describe, but neither host will serve the API.
+a file on disk — Render, Railway, Fly, or any VPS. Vercel can serve the app if
+the API is deployed as a serverless function, but the SQLite database will be
+ephemeral there unless you move it to persistent storage. `public/_redirects`
+and `vercel.json` are left in place for the client-side routing they describe.
 
 ```bash
 npm ci
