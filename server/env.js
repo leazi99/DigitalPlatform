@@ -67,6 +67,16 @@ export function assertConfig() {
   }
 
   if (missing.length > 0) {
+    // On Vercel, exiting kills the function with a bare 500 that says
+    // nothing. Throwing lets api/index.js answer with which settings are
+    // missing instead.
+    if (process.env.VERCEL) {
+      const error = new Error(
+        `The admin API cannot start. Set these in Vercel → Settings → Environment Variables, then redeploy: ${missing.join(", ")}.`,
+      );
+      error.expose = true;
+      throw error;
+    }
     console.error(
       [
         "",
