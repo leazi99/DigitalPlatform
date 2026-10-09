@@ -9,7 +9,11 @@
 
 // Empty in production: the API and the site are served from the same origin,
 // so a relative /api is correct. In development this points at the API port.
-const base = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+// A production build always calls its own origin, so a dev-only VITE_API_URL
+// left in .env cannot bake http://localhost:4000 into the deployed site.
+const base = import.meta.env.PROD
+  ? ""
+  : (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 const TOKEN_KEY = "dw.admin.token";
 
