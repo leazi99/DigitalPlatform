@@ -24,18 +24,21 @@ export const config = {
 
   // Signs admin session tokens. Change it and every admin is logged out,
   // which is the right behaviour if you think a token has leaked.
-  jwtSecret: process.env.JWT_SECRET ?? "",
+  jwtSecret: (process.env.JWT_SECRET ?? "").trim(),
 
   // How long an admin stays signed in.
   sessionHours: Number(process.env.SESSION_HOURS ?? 12),
 
+  // Trimmed, because a value pasted into a hosting dashboard easily picks up
+  // a trailing space or newline, and the login compares the password exactly.
+  //
   // The first admin, created on first run only. After that, change the
   // password from the admin panel — editing these does nothing to an
   // account that already exists.
   seedAdmin: {
-    email: process.env.ADMIN_EMAIL ?? "admin@digitalworld.local",
-    password: process.env.ADMIN_PASSWORD ?? "",
-    name: process.env.ADMIN_NAME ?? "Administrator",
+    email: process.env.ADMIN_EMAIL?.trim() || "admin@digitalworld.local",
+    password: (process.env.ADMIN_PASSWORD ?? "").trim(),
+    name: process.env.ADMIN_NAME?.trim() || "Administrator",
   },
 
   // Browser origins allowed to call the API. In dev the Vite server is on a
