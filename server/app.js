@@ -20,9 +20,14 @@ import { adminRouter } from "./routes/admin.js";
 import { requireAdmin } from "./auth.js";
 import { rateLimit } from "./rateLimit.js";
 import { seed } from "./seed.js";
+import { connect } from "./db.js";
 
+// Connect and seed before the app is handed out, so no request ever reaches a
+// route before the database is ready. On Vercel a failure here surfaces as
+// the JSON error `api/index.js` returns.
 assertConfig();
-seed();
+await connect();
+await seed();
 
 export const app = express();
 

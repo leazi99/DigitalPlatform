@@ -10,9 +10,9 @@
  *   text   trimmed string
  *   long   trimmed string, expected to be a paragraph
  *   int    integer
- *   bool   stored 0/1, sent as true/false
- *   json   stored as a JSON string, sent as an array or object
- *   ref    integer foreign key, or null
+ *   bool   true/false
+ *   json   an array or object, stored as-is
+ *   ref    the numeric `id` of a record in another collection, or null
  *   enum   one of `values`
  */
 export const resources = {
@@ -194,7 +194,7 @@ export const resources = {
     label: "Student",
     plural: "Students",
     ordered: false,
-    defaultSort: "created_at DESC, id DESC",
+    defaultSort: { created_at: -1, id: -1 },
     search: ["name", "email", "phone", "message", "notes"],
     filters: ["status", "batch_id", "course_id"],
     columns: {
@@ -222,7 +222,7 @@ export const resources = {
     label: "Enquiry",
     plural: "Enquiries",
     ordered: false,
-    defaultSort: "created_at DESC, id DESC",
+    defaultSort: { created_at: -1, id: -1 },
     search: ["name", "email", "phone", "message", "notes"],
     filters: ["status", "sector"],
     columns: {
@@ -260,11 +260,7 @@ export function toJson(spec, row) {
   for (const [name, col] of Object.entries(spec.columns)) {
     const raw = row[name];
     if (col.type === "json") {
-      try {
-        out[name] = JSON.parse(raw ?? "null") ?? col.default ?? [];
-      } catch {
-        out[name] = col.default ?? [];
-      }
+      out[name] = raw ?? col.default ?? [];
     } else if (col.type === "bool") {
       out[name] = Boolean(raw);
     } else {
@@ -327,18 +323,13 @@ export function fromJson(spec, body, { partial = false } = {}) {
 
 function defaultFor(col) {
   if (col.default !== undefined) {
-    return col.type === "json" ? JSON.stringify(col.default) : encode(col, col.default);
+    return col.type === "json" ? structuredClone(col.default) : col.default;
   }
-  if (col.type === "json") return "[]";
-  if (col.type === "bool") return 0;
+  if (col.type === "json") return [];
+  if (col.type === "bool") return false;
   if (col.type === "int") return 0;
   if (col.type === "ref") return null;
   return "";
-}
-
-function encode(col, value) {
-  if (col.type === "bool") return value ? 1 : 0;
-  return value;
 }
 
 function coerce(col, value) {
@@ -361,10 +352,10 @@ function coerce(col, value) {
         );
         parsed = parsed.map((item) => (typeof item === "string" ? item.trim() : item));
       }
-      return JSON.stringify(parsed ?? []);
+      return parsed ?? [];
     }
     case "bool":
-      return value === true || value === 1 || value === "1" || value === "true" ? 1 : 0;
+      return value === true || value === 1 || value === "1" || value === "true";
     case "int": {
       const n = Number.parseInt(value, 10);
       return Number.isFinite(n) ? n : 0;

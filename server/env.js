@@ -15,12 +15,10 @@ export const root = resolve(here, "..");
 export const config = {
   port: Number(process.env.PORT ?? 4000),
 
-  // The database file. Gitignored — it holds real enrolments and visitor logs.
-  dbFile: process.env.DB_FILE
-    ? resolve(root, process.env.DB_FILE)
-    : process.env.VERCEL
-      ? "/tmp/data.db"
-      : resolve(here, "data.db"),
+  // MongoDB Atlas connection string (mongodb+srv://…). The database lives
+  // outside the server, so it survives deploys and serverless cold starts.
+  mongoUri: (process.env.MONGODB_URI ?? "").trim(),
+  mongoDb: process.env.MONGODB_DB?.trim() || "digitalworld",
 
   // Signs admin session tokens. Change it and every admin is logged out,
   // which is the right behaviour if you think a token has leaked.
@@ -62,6 +60,9 @@ export const config = {
  */
 export function assertConfig() {
   const missing = [];
+  if (!config.mongoUri) {
+    missing.push("MONGODB_URI (your MongoDB Atlas connection string)");
+  }
   if (!config.jwtSecret || config.jwtSecret.length < 32) {
     missing.push("JWT_SECRET (at least 32 characters)");
   }

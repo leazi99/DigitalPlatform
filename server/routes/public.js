@@ -3,7 +3,7 @@
 // accepts and what it gives back.
 
 import { Router } from "express";
-import { db } from "../db.js";
+import { col, nextId, now } from "../db.js";
 import { buildContent } from "../content.js";
 import { describeClient, looksLikeABot, markConverted, record, referrerHost } from "../analytics.js";
 import { rateLimit } from "../rateLimit.js";
@@ -11,9 +11,9 @@ import { rateLimit } from "../rateLimit.js";
 export const publicRouter = Router();
 
 /** GET /api/content — everything the public pages render. */
-publicRouter.get("/content", (req, res) => {
+publicRouter.get("/content", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  res.json(buildContent());
+  res.json(await buildContent());
 });
 
 /**
@@ -23,7 +23,7 @@ publicRouter.get("/content", (req, res) => {
  * never make a visitor's browser show an error, and a failed beat is not
  * something the visitor can do anything about.
  */
-publicRouter.post("/track", rateLimit({ max: 240, windowMs: 60_000 }), (req, res) => {
+publicRouter.post("/track", rateLimit({ max: 240, windowMs: 60_000 }), async (req, res) => {
   const ua = req.get("user-agent") ?? "";
   if (looksLikeABot(ua)) return res.status(204).end();
 
@@ -38,7 +38,7 @@ publicRouter.post("/track", rateLimit({ max: 240, windowMs: 60_000 }), (req, res
   const { device, browser, os } = describeClient(ua);
 
   try {
-    record({
+    await record({
       visitorId,
       sessionId,
       type,
@@ -67,7 +67,7 @@ publicRouter.post("/track", rateLimit({ max: 240, windowMs: 60_000 }), (req, res
  * Creates a student row with status `enquiry`: nobody is enrolled until a
  * person at the company says so, and the form says as much to the visitor.
  */
-publicRouter.post("/enrol", rateLimit({ max: 10, windowMs: 10 * 60_000 }), (req, res) => {
+publicRouter.post("/enrol", rateLimit({ max: 10, windowMs: 10 * 60_000 }), async (req, res) => {
   const body = req.body ?? {};
   const errors = {};
 
@@ -85,39 +85,40 @@ publicRouter.post("/enrol", rateLimit({ max: 10, windowMs: 10 * 60_000 }), (req,
   }
 
   const batchName = str(body.batch, 120);
-  const batch = batchName
-    ? db.prepare("SELECT id, course_id FROM batches WHERE name = ?").get(batchName)
-    : null;
-  const liveCourse = db
-    .prepare("SELECT id FROM courses WHERE published = 1 ORDER BY position, id LIMIT 1")
-    .get();
+  const batch = batchName ? await col("batches").findOne({ name: batchName }) : null;
+  const liveCourse = await col("courses").findOne(
+    { published: true },
+    { sort: { position: 1, id: 1 } },
+  );
 
   const sessionId = str(body.sessionId, 64) || null;
+  const stamp = now();
 
-  const student = db
-    .prepare(
-      `INSERT INTO students (name, email, phone, course_id, batch_id, batch_name, message, source, session_id)
-       VALUES (@name, @email, @phone, @courseId, @batchId, @batchName, @message, 'website', @sessionId)
-       RETURNING id`,
-    )
-    .get({
-      name,
-      email,
-      phone,
-      courseId: batch?.course_id ?? liveCourse?.id ?? null,
-      batchId: batch?.id ?? null,
-      batchName,
-      message: str(body.message, 2000),
-      sessionId,
-    });
+  const student = {
+    id: await nextId("students"),
+    name,
+    email,
+    phone,
+    course_id: batch?.course_id ?? liveCourse?.id ?? null,
+    batch_id: batch?.id ?? null,
+    batch_name: batchName,
+    status: "enquiry",
+    source: "website",
+    message: str(body.message, 2000),
+    notes: "",
+    session_id: sessionId,
+    created_at: stamp,
+    updated_at: stamp,
+  };
+  await col("students").insertOne(student);
 
-  markConverted(sessionId);
+  await markConverted(sessionId);
 
   res.status(201).json({ ok: true, id: student.id });
 });
 
 /** POST /api/enquiries — the agency's contact form. */
-publicRouter.post("/enquiries", rateLimit({ max: 10, windowMs: 10 * 60_000 }), (req, res) => {
+publicRouter.post("/enquiries", rateLimit({ max: 10, windowMs: 10 * 60_000 }), async (req, res) => {
   const body = req.body ?? {};
   const errors = {};
 
@@ -141,23 +142,25 @@ publicRouter.post("/enquiries", rateLimit({ max: 10, windowMs: 10 * 60_000 }), (
   const sessionId = str(body.sessionId, 64) || null;
   const sector = body.sector === "institute" ? "institute" : "agency";
 
-  const enquiry = db
-    .prepare(
-      `INSERT INTO enquiries (name, email, phone, service, message, sector, session_id)
-       VALUES (@name, @email, @phone, @service, @message, @sector, @sessionId)
-       RETURNING id`,
-    )
-    .get({
-      name,
-      email,
-      phone,
-      service: str(body.service, 160),
-      message,
-      sector,
-      sessionId,
-    });
+  const stamp = now();
 
-  markConverted(sessionId);
+  const enquiry = {
+    id: await nextId("enquiries"),
+    name,
+    email,
+    phone,
+    service: str(body.service, 160),
+    message,
+    sector,
+    status: "new",
+    notes: "",
+    session_id: sessionId,
+    created_at: stamp,
+    updated_at: stamp,
+  };
+  await col("enquiries").insertOne(enquiry);
+
+  await markConverted(sessionId);
 
   res.status(201).json({ ok: true, id: enquiry.id });
 });

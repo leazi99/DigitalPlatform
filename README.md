@@ -1,7 +1,7 @@
 # Digital World Pvt.Ltd — website and admin panel
 
 Two public sectors and a staff panel, built with Vite + React + Tailwind CSS v4
-on an Express + SQLite backend.
+on an Express + MongoDB (Atlas) backend.
 
 ```
 /            brand landing — two doors
@@ -145,11 +145,14 @@ visit turned into an enquiry and what that person read first.
 
 ## Deploying
 
-**This is no longer a static site.** It needs a host that runs Node and keeps
-a file on disk — Render, Railway, Fly, or any VPS. Vercel can serve the app if
-the API is deployed as a serverless function, but the SQLite database will be
-ephemeral there unless you move it to persistent storage. `public/_redirects`
-and `vercel.json` are left in place for the client-side routing they describe.
+**This is no longer a static site.** The data lives in MongoDB Atlas, outside
+the server, so it survives deploys — on Vercel (the site as static files, the
+API as one serverless function via `api/index.js`) or on any Node host.
+
+In Atlas, create a database user, and under **Network Access** allow
+`0.0.0.0/0`: Vercel's functions do not call from fixed IP addresses.
+
+On a Node host instead of Vercel:
 
 ```bash
 npm ci
@@ -168,23 +171,22 @@ Set in the host's environment:
 |---|---|
 | `JWT_SECRET` | Required, 32+ characters. Changing it signs every admin out. |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Required on first deploy only — they create the first account |
-| `PORT` | Whatever the host assigns |
-| `DB_FILE` | Point at a **persistent disk**, or the database is wiped on every deploy |
+| `MONGODB_URI` | Required. The Atlas `mongodb+srv://…` connection string |
+| `MONGODB_DB` | Optional database name, default `digitalworld` |
+| `PORT` | Whatever the host assigns (not needed on Vercel) |
 | `VITE_API_URL` | Leave **empty** in production: same origin, so a relative `/api` is correct |
 
-`DB_FILE` is the one to get right. On a host with an ephemeral filesystem, a
-deploy takes the enrolments with it unless the database is on a mounted volume.
+The first admin is created from `ADMIN_EMAIL` / `ADMIN_PASSWORD` only while
+the database has no admins. After that, change passwords and add admins from
+inside the panel.
 
 ### Backups
 
-The whole thing is one file. Copy it:
+Atlas takes snapshots on paid tiers. On the free tier, dump it yourself:
 
 ```bash
-sqlite3 server/data.db ".backup '/somewhere/safe/data-$(date +%F).db'"
+mongodump --uri "$MONGODB_URI" --out "backup-$(date +%F)"
 ```
-
-Use `.backup` rather than `cp` — the database runs in WAL mode, so a plain copy
-of the `.db` file alone can miss the most recent writes.
 
 ## Structure
 
@@ -192,7 +194,7 @@ of the `.db` file alone can miss the most recent writes.
 server/
   index.js            the Express app, and in production the site too
   env.js              configuration, and the checks that refuse to start without it
-  db.js               the SQLite schema, opened at startup
+  db.js               the MongoDB connection, indexes and shared helpers
   seed.js             first-run content, imported from src/data/
   auth.js             bcrypt passwords, JWT sessions
   resources.js        what the admin can CRUD, described as data

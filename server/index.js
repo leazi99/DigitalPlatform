@@ -6,6 +6,6 @@ import { app } from "./app.js";
 
 app.listen(config.port, () => {
   console.log(`\n  Digital World API — http://localhost:${config.port}`);
-  console.log(`  database: ${config.dbFile}`);
+  console.log(`  database: MongoDB, "${config.mongoDb}"`);
   console.log("");
 });

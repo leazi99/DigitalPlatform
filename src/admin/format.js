@@ -4,7 +4,7 @@
 // which is what lets Vite hot-reload a component edit without losing the
 // screen's state.
 
-/** SQLite hands back "2026-09-25 07:17:42" in UTC. Without the Z a browser
+/** The API stores and sends "2026-09-25 07:17:42" in UTC. Without the Z a browser
  *  reads it as local time and every timestamp is hours out. */
 export function parseStamp(value) {
   if (!value) return null;

@@ -5,13 +5,32 @@
 // the browser keeps in its own storage, which is enough to answer "how many
 // people came, and did they engage" and not enough to identify anyone.
 
-import { db } from "./db.js";
+import { DAY, NO_ID, ago, col, now } from "./db.js";
+import { escapeRegex } from "./crud.js";
 
 /** A session counts as engaged if the visitor did more than glance at one
  *  page: a second page, half a minute, or any deliberate action. The
  *  dashboard states this definition on screen rather than leaving the admin
  *  to guess what "engaged" was measured as. */
-const ENGAGED_SQL = "(pageviews >= 2 OR duration_ms >= 30000 OR events >= 1)";
+const ENGAGED = {
+  $or: [
+    { $gte: ["$pageviews", 2] },
+    { $gte: ["$duration_ms", 30000] },
+    { $gte: ["$events", 1] },
+  ],
+};
+
+const BOUNCED = {
+  $and: [
+    { $lte: ["$pageviews", 1] },
+    { $eq: ["$events", 0] },
+    { $lt: ["$duration_ms", 30000] },
+  ],
+};
+
+const isEngaged = (s) => s.pageviews >= 2 || s.duration_ms >= 30000 || s.events >= 1;
+
+const MAX_DURATION = 6 * 60 * 60 * 1000;
 
 const BOT = /bot|crawler|spider|crawling|slurp|bingpreview|headlesschrome|lighthouse|pingdom|curl|wget|python-requests|axios/i;
 
@@ -66,240 +85,293 @@ export function referrerHost(referrer = "") {
   }
 }
 
-const upsertVisitor = db.prepare(`
-  INSERT INTO visitors (visitor_id, device, browser, os, landing_path, referrer)
-  VALUES (@visitorId, @device, @browser, @os, @path, @referrer)
-  ON CONFLICT(visitor_id) DO UPDATE SET
-    last_seen = datetime('now'),
-    device    = excluded.device,
-    browser   = excluded.browser,
-    os        = excluded.os
-`);
-
-const upsertSession = db.prepare(`
-  INSERT INTO sessions
-    (session_id, visitor_id, landing_path, referrer, device, browser, os, screen, language, is_new)
-  VALUES
-    (@sessionId, @visitorId, @path, @referrer, @device, @browser, @os, @screen, @language, @isNew)
-  ON CONFLICT(session_id) DO UPDATE SET last_seen_at = datetime('now')
-`);
-
 /**
  * Record one beat from the browser.
  *
- * Every type of beat first makes sure the visitor and session rows exist, so
- * a page opened directly on an anchor link — where the first thing we hear is
- * an event, not a pageview — still produces a complete session.
+ * Every type of beat first makes sure the visitor and session documents
+ * exist, so a page opened directly on an anchor link — where the first thing
+ * we hear is an event, not a pageview — still produces a complete session.
  */
-export const record = db.transaction((beat) => {
+export async function record(beat) {
   const { visitorId, sessionId, type } = beat;
+  const stamp = now();
 
-  const existingSession = db
-    .prepare("SELECT session_id FROM sessions WHERE session_id = ?")
-    .get(sessionId);
+  const visitor = await col("visitors").updateOne(
+    { visitor_id: visitorId },
+    {
+      $set: { last_seen: stamp, device: beat.device, browser: beat.browser, os: beat.os },
+      $setOnInsert: {
+        first_seen: stamp,
+        sessions: 0,
+        pageviews: 0,
+        events: 0,
+        landing_path: beat.path,
+        referrer: beat.referrer,
+        converted: 0,
+      },
+    },
+    { upsert: true },
+  );
+  const isNewVisitor = visitor.upsertedCount === 1;
 
-  const isNewVisitor = !db
-    .prepare("SELECT visitor_id FROM visitors WHERE visitor_id = ?")
-    .get(visitorId);
+  const inc = {};
+  if (type === "pageview") inc.pageviews = 1;
+  if (type === "event") inc.events = 1;
 
-  upsertVisitor.run({
-    visitorId,
-    device: beat.device,
-    browser: beat.browser,
-    os: beat.os,
-    path: beat.path,
-    referrer: beat.referrer,
-  });
+  // Duration arrives as a running total for the session, not an increment, so
+  // a beat that arrives out of order cannot inflate it. `$max` keeps the
+  // longest figure seen.
+  const max = {};
+  if (Number.isFinite(beat.durationMs) && beat.durationMs > 0) {
+    max.duration_ms = Math.min(beat.durationMs, MAX_DURATION);
+  }
 
-  upsertSession.run({
-    sessionId,
-    visitorId,
-    path: beat.path,
+  // A counter being incremented cannot also be defaulted on insert — Mongo
+  // rejects the conflict — and `$inc`/`$max` create the field anyway.
+  const onInsert = {
+    visitor_id: visitorId,
+    started_at: stamp,
+    pageviews: 0,
+    events: 0,
+    duration_ms: 0,
+    is_new: isNewVisitor ? 1 : 0,
+    landing_path: beat.path,
     referrer: beat.referrer,
     device: beat.device,
     browser: beat.browser,
     os: beat.os,
     screen: beat.screen,
     language: beat.language,
-    isNew: isNewVisitor ? 1 : 0,
+    converted: 0,
+  };
+  for (const key of [...Object.keys(inc), ...Object.keys(max)]) delete onInsert[key];
+
+  const update = { $set: { last_seen_at: stamp }, $setOnInsert: onInsert };
+  if (Object.keys(inc).length) update.$inc = inc;
+  if (Object.keys(max).length) update.$max = max;
+
+  const session = await col("sessions").updateOne({ session_id: sessionId }, update, {
+    upsert: true,
   });
 
-  if (!existingSession) {
-    db.prepare("UPDATE visitors SET sessions = sessions + 1 WHERE visitor_id = ?").run(visitorId);
+  const visitorInc = { ...inc };
+  if (session.upsertedCount === 1) visitorInc.sessions = 1;
+  if (Object.keys(visitorInc).length) {
+    await col("visitors").updateOne({ visitor_id: visitorId }, { $inc: visitorInc });
   }
 
   if (type === "pageview") {
-    db.prepare(
-      `INSERT INTO pageviews (session_id, visitor_id, path, title, referrer)
-       VALUES (@sessionId, @visitorId, @path, @title, @referrer)`,
-    ).run({
-      sessionId,
-      visitorId,
+    await col("pageviews").insertOne({
+      session_id: sessionId,
+      visitor_id: visitorId,
       path: beat.path,
       title: beat.title,
       referrer: beat.referrer,
+      duration_ms: 0,
+      created_at: stamp,
     });
-    db.prepare(
-      "UPDATE sessions SET pageviews = pageviews + 1, last_seen_at = datetime('now') WHERE session_id = ?",
-    ).run(sessionId);
-    db.prepare("UPDATE visitors SET pageviews = pageviews + 1 WHERE visitor_id = ?").run(visitorId);
   }
 
   if (type === "event") {
-    db.prepare(
-      `INSERT INTO events (session_id, visitor_id, name, path, meta)
-       VALUES (@sessionId, @visitorId, @name, @path, @meta)`,
-    ).run({
-      sessionId,
-      visitorId,
+    await col("events").insertOne({
+      session_id: sessionId,
+      visitor_id: visitorId,
       name: beat.name,
       path: beat.path,
-      meta: JSON.stringify(beat.meta ?? {}),
+      meta: beat.meta ?? {},
+      created_at: stamp,
     });
-    db.prepare(
-      "UPDATE sessions SET events = events + 1, last_seen_at = datetime('now') WHERE session_id = ?",
-    ).run(sessionId);
-    db.prepare("UPDATE visitors SET events = events + 1 WHERE visitor_id = ?").run(visitorId);
-  }
-
-  // Duration arrives as a running total for the session, not an increment, so
-  // a beat that arrives out of order cannot inflate it. `MAX` keeps the
-  // longest figure seen.
-  if (Number.isFinite(beat.durationMs) && beat.durationMs > 0) {
-    db.prepare(
-      `UPDATE sessions
-          SET duration_ms = MAX(duration_ms, @durationMs), last_seen_at = datetime('now')
-        WHERE session_id = @sessionId`,
-    ).run({ durationMs: Math.min(beat.durationMs, 6 * 60 * 60 * 1000), sessionId });
   }
 
   // A pageview's own dwell time, sent when the visitor leaves that page.
   if (type === "pageview-end" && Number.isFinite(beat.durationMs)) {
-    db.prepare(
-      `UPDATE pageviews SET duration_ms = @durationMs
-        WHERE id = (SELECT id FROM pageviews
-                     WHERE session_id = @sessionId AND path = @path
-                     ORDER BY id DESC LIMIT 1)`,
-    ).run({ durationMs: Math.min(beat.durationMs, 6 * 60 * 60 * 1000), sessionId, path: beat.path });
-  }
-});
-
-/** Flags the session that submitted a form, so the dashboard can say how many
- *  visits turned into an enrolment or an enquiry. */
-export function markConverted(sessionId) {
-  if (!sessionId) return;
-  const session = db
-    .prepare("UPDATE sessions SET converted = 1 WHERE session_id = ? RETURNING visitor_id")
-    .get(sessionId);
-  if (session) {
-    db.prepare("UPDATE visitors SET converted = 1 WHERE visitor_id = ?").run(session.visitor_id);
+    await col("pageviews").findOneAndUpdate(
+      { session_id: sessionId, path: beat.path },
+      { $set: { duration_ms: Math.min(beat.durationMs, MAX_DURATION) } },
+      { sort: { _id: -1 } },
+    );
   }
 }
 
-const since = (days) => `datetime('now', '-${Number(days)} days')`;
+/** Flags the session that submitted a form, so the dashboard can say how many
+ *  visits turned into an enrolment or an enquiry. */
+export async function markConverted(sessionId) {
+  if (!sessionId) return;
+  const session = await col("sessions").findOneAndUpdate(
+    { session_id: sessionId },
+    { $set: { converted: 1 } },
+  );
+  if (session) {
+    await col("visitors").updateOne({ visitor_id: session.visitor_id }, { $set: { converted: 1 } });
+  }
+}
+
+const since = (days) => ago(Number(days) * DAY);
+
+/** Run an aggregation pipeline and collect the results. */
+const aggregate = (name, pipeline) => col(name).aggregate(pipeline).toArray();
 
 /** Everything the dashboard shows, for the last `days` days. */
-export function overview(days = 30) {
+export async function overview(days = 30) {
   const d = Math.max(1, Math.min(Number(days) || 30, 365));
+  const inSessions = { $match: { started_at: { $gte: since(d) } } };
 
-  const totals = db
-    .prepare(
-      `SELECT
-         COUNT(*)                                    AS sessions,
-         COUNT(DISTINCT visitor_id)                  AS visitors,
-         COALESCE(SUM(pageviews), 0)                 AS pageviews,
-         COALESCE(SUM(events), 0)                    AS events,
-         COALESCE(SUM(${ENGAGED_SQL}), 0)            AS engaged,
-         COALESCE(SUM(is_new), 0)                    AS new_visitors,
-         COALESCE(SUM(converted), 0)                 AS converted,
-         COALESCE(SUM(pageviews <= 1 AND events = 0 AND duration_ms < 30000), 0) AS bounced,
-         COALESCE(AVG(duration_ms), 0)               AS avg_duration_ms
-       FROM sessions WHERE started_at >= ${since(d)}`,
-    )
-    .get();
+  const byDimension = (field) =>
+    aggregate("sessions", [
+      inSessions,
+      {
+        $group: {
+          _id: { $cond: [{ $eq: [{ $ifNull: [`$${field}`, ""] }, ""] }, "Unknown", `$${field}`] },
+          sessions: { $sum: 1 },
+        },
+      },
+      { $sort: { sessions: -1 } },
+      { $project: { _id: 0, name: "$_id", sessions: 1 } },
+    ]);
 
-  const series = db
-    .prepare(
-      `SELECT date(started_at)                        AS day,
-              COUNT(*)                                AS sessions,
-              COUNT(DISTINCT visitor_id)              AS visitors,
-              COALESCE(SUM(pageviews), 0)             AS pageviews,
-              COALESCE(SUM(${ENGAGED_SQL}), 0)        AS engaged
-         FROM sessions WHERE started_at >= ${since(d)}
-        GROUP BY day ORDER BY day`,
-    )
-    .all();
+  const [
+    [totals = {}],
+    series,
+    topPages,
+    topReferrers,
+    devices,
+    browsers,
+    topEvents,
+    studentsInPeriod,
+    enquiriesInPeriod,
+  ] = await Promise.all([
+    aggregate("sessions", [
+      inSessions,
+      {
+        $group: {
+          _id: null,
+          sessions: { $sum: 1 },
+          visitors: { $addToSet: "$visitor_id" },
+          pageviews: { $sum: "$pageviews" },
+          events: { $sum: "$events" },
+          engaged: { $sum: { $cond: [ENGAGED, 1, 0] } },
+          new_visitors: { $sum: "$is_new" },
+          converted: { $sum: "$converted" },
+          bounced: { $sum: { $cond: [BOUNCED, 1, 0] } },
+          avg_duration_ms: { $avg: "$duration_ms" },
+        },
+      },
+      { $set: { visitors: { $size: "$visitors" } } },
+    ]),
+    aggregate("sessions", [
+      inSessions,
+      {
+        $group: {
+          _id: { $substrBytes: ["$started_at", 0, 10] },
+          sessions: { $sum: 1 },
+          visitors: { $addToSet: "$visitor_id" },
+          pageviews: { $sum: "$pageviews" },
+          engaged: { $sum: { $cond: [ENGAGED, 1, 0] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id: 0,
+          day: "$_id",
+          sessions: 1,
+          visitors: { $size: "$visitors" },
+          pageviews: 1,
+          engaged: 1,
+        },
+      },
+    ]),
+    aggregate("pageviews", [
+      { $match: { created_at: { $gte: since(d) } } },
+      {
+        $group: {
+          _id: "$path",
+          views: { $sum: 1 },
+          visitors: { $addToSet: "$visitor_id" },
+          // Pages left before the dwell beat arrived have no duration; they
+          // are left out of the average rather than dragging it to zero.
+          avg_duration_ms: {
+            $avg: { $cond: [{ $gt: ["$duration_ms", 0] }, "$duration_ms", null] },
+          },
+        },
+      },
+      { $sort: { views: -1 } },
+      { $limit: 12 },
+      {
+        $project: {
+          _id: 0,
+          path: "$_id",
+          views: 1,
+          visitors: { $size: "$visitors" },
+          avg_duration_ms: { $ifNull: ["$avg_duration_ms", 0] },
+        },
+      },
+    ]),
+    aggregate("sessions", [
+      inSessions,
+      {
+        $group: {
+          _id: {
+            $cond: [{ $eq: [{ $ifNull: ["$referrer", ""] }, ""] }, "Direct / none", "$referrer"],
+          },
+          sessions: { $sum: 1 },
+        },
+      },
+      { $sort: { sessions: -1 } },
+      { $limit: 10 },
+      { $project: { _id: 0, source: "$_id", sessions: 1 } },
+    ]),
+    byDimension("device"),
+    byDimension("browser"),
+    aggregate("events", [
+      { $match: { created_at: { $gte: since(d) } } },
+      { $group: { _id: "$name", count: { $sum: 1 }, sessions: { $addToSet: "$session_id" } } },
+      { $sort: { count: -1 } },
+      { $limit: 12 },
+      { $project: { _id: 0, name: "$_id", count: 1, sessions: { $size: "$sessions" } } },
+    ]),
+    col("students").countDocuments({ created_at: { $gte: since(d) } }),
+    col("enquiries").countDocuments({ created_at: { $gte: since(d) } }),
+  ]);
 
-  const topPages = db
-    .prepare(
-      `SELECT path,
-              COUNT(*)                   AS views,
-              COUNT(DISTINCT visitor_id) AS visitors,
-              COALESCE(AVG(NULLIF(duration_ms, 0)), 0) AS avg_duration_ms
-         FROM pageviews WHERE created_at >= ${since(d)}
-        GROUP BY path ORDER BY views DESC LIMIT 12`,
-    )
-    .all();
-
-  const topReferrers = db
-    .prepare(
-      `SELECT CASE WHEN referrer = '' THEN 'Direct / none' ELSE referrer END AS source,
-              COUNT(*) AS sessions
-         FROM sessions WHERE started_at >= ${since(d)}
-        GROUP BY source ORDER BY sessions DESC LIMIT 10`,
-    )
-    .all();
-
-  const byDimension = (column) =>
-    db
-      .prepare(
-        `SELECT CASE WHEN ${column} = '' THEN 'Unknown' ELSE ${column} END AS name,
-                COUNT(*) AS sessions
-           FROM sessions WHERE started_at >= ${since(d)}
-          GROUP BY name ORDER BY sessions DESC`,
-      )
-      .all();
-
-  const topEvents = db
-    .prepare(
-      `SELECT name, COUNT(*) AS count, COUNT(DISTINCT session_id) AS sessions
-         FROM events WHERE created_at >= ${since(d)}
-        GROUP BY name ORDER BY count DESC LIMIT 12`,
-    )
-    .all();
-
-  const studentsInPeriod = db
-    .prepare(`SELECT COUNT(*) AS n FROM students WHERE created_at >= ${since(d)}`)
-    .get().n;
-  const enquiriesInPeriod = db
-    .prepare(`SELECT COUNT(*) AS n FROM enquiries WHERE created_at >= ${since(d)}`)
-    .get().n;
+  const t = {
+    sessions: 0,
+    visitors: 0,
+    pageviews: 0,
+    events: 0,
+    engaged: 0,
+    new_visitors: 0,
+    converted: 0,
+    bounced: 0,
+    avg_duration_ms: 0,
+    ...totals,
+  };
 
   const rate = (part, whole) => (whole > 0 ? Math.round((part / whole) * 1000) / 10 : 0);
 
   return {
     days: d,
     totals: {
-      visitors: totals.visitors,
-      sessions: totals.sessions,
-      pageviews: totals.pageviews,
-      events: totals.events,
-      engagedSessions: totals.engaged,
-      engagementRate: rate(totals.engaged, totals.sessions),
-      bounceRate: rate(totals.bounced, totals.sessions),
-      newVisitors: totals.new_visitors,
-      returningVisitors: Math.max(0, totals.sessions - totals.new_visitors),
-      avgDurationSec: Math.round(totals.avg_duration_ms / 1000),
-      conversions: totals.converted,
-      conversionRate: rate(totals.converted, totals.sessions),
+      visitors: t.visitors,
+      sessions: t.sessions,
+      pageviews: t.pageviews,
+      events: t.events,
+      engagedSessions: t.engaged,
+      engagementRate: rate(t.engaged, t.sessions),
+      bounceRate: rate(t.bounced, t.sessions),
+      newVisitors: t.new_visitors,
+      returningVisitors: Math.max(0, t.sessions - t.new_visitors),
+      avgDurationSec: Math.round((t.avg_duration_ms ?? 0) / 1000),
+      conversions: t.converted,
+      conversionRate: rate(t.converted, t.sessions),
       students: studentsInPeriod,
       enquiries: enquiriesInPeriod,
     },
     series: fillDays(series, d),
     topPages,
     topReferrers,
-    devices: byDimension("device"),
-    browsers: byDimension("browser"),
+    devices,
+    browsers,
     topEvents,
     engagedDefinition:
       "A session with two or more pages, or thirty seconds or more on the site, or at least one tracked action.",
@@ -323,103 +395,113 @@ function fillDays(rows, days) {
 }
 
 /** The visitor list, newest first. */
-export function listVisitors({ q = "", limit = 50, offset = 0, engagedOnly = false } = {}) {
-  const where = [];
-  const params = { limit: Math.min(Number(limit) || 50, 500), offset: Number(offset) || 0 };
+export async function listVisitors({ q = "", limit = 50, offset = 0, engagedOnly = false } = {}) {
+  const and = [];
 
   if (q) {
-    params.q = `%${q}%`;
+    const pattern = new RegExp(escapeRegex(q), "i");
     // A session id is searchable too: the enrolments and enquiries screens link
     // here by the session that sent the form, so pasting one has to find the
     // visitor behind it.
-    where.push(`(v.visitor_id LIKE @q OR v.landing_path LIKE @q OR v.referrer LIKE @q
-       OR EXISTS (SELECT 1 FROM sessions s WHERE s.visitor_id = v.visitor_id AND s.session_id LIKE @q))`);
+    const bySession = await col("sessions").distinct("visitor_id", { session_id: pattern });
+    and.push({
+      $or: [
+        { visitor_id: pattern },
+        { landing_path: pattern },
+        { referrer: pattern },
+        { visitor_id: { $in: bySession } },
+      ],
+    });
   }
   if (engagedOnly) {
-    where.push("(v.pageviews >= 2 OR v.events >= 1)");
+    and.push({ $or: [{ pageviews: { $gte: 2 } }, { events: { $gte: 1 } }] });
   }
-  const sql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const filter = and.length ? { $and: and } : {};
 
-  const total = db.prepare(`SELECT COUNT(*) AS n FROM visitors v ${sql}`).get(params).n;
-  const items = db
-    .prepare(
-      `SELECT v.*,
-              (SELECT COALESCE(SUM(duration_ms), 0) FROM sessions s WHERE s.visitor_id = v.visitor_id) AS total_duration_ms
-         FROM visitors v ${sql}
-        ORDER BY v.last_seen DESC LIMIT @limit OFFSET @offset`,
-    )
-    .all(params);
+  const [total, visitors] = await Promise.all([
+    col("visitors").countDocuments(filter),
+    col("visitors")
+      .find(filter, NO_ID)
+      .sort({ last_seen: -1 })
+      .skip(Number(offset) || 0)
+      .limit(Math.min(Number(limit) || 50, 500))
+      .toArray(),
+  ]);
+
+  const durations = await aggregate("sessions", [
+    { $match: { visitor_id: { $in: visitors.map((v) => v.visitor_id) } } },
+    { $group: { _id: "$visitor_id", total: { $sum: "$duration_ms" } } },
+  ]);
+  const durationOf = new Map(durations.map((row) => [row._id, row.total]));
+
+  const items = visitors.map((v) => ({
+    ...v,
+    total_duration_ms: durationOf.get(v.visitor_id) ?? 0,
+  }));
 
   return { items, total };
 }
 
+/** Pageviews and events have no numeric id; the browser keys lists by this. */
+const withId = ({ _id, ...rest }) => ({ id: String(_id), ...rest });
+
 /** One visitor: every session, page and action, plus anything they sent us. */
-export function visitorDetail(visitorId) {
-  const visitor = db.prepare("SELECT * FROM visitors WHERE visitor_id = ?").get(visitorId);
+export async function visitorDetail(visitorId) {
+  const visitor = await col("visitors").findOne({ visitor_id: visitorId }, NO_ID);
   if (!visitor) return null;
 
-  const sessions = db
-    .prepare(
-      `SELECT *, ${ENGAGED_SQL} AS engaged FROM sessions
-        WHERE visitor_id = ? ORDER BY started_at DESC LIMIT 100`,
-    )
-    .all(visitorId);
-
-  const pageviews = db
-    .prepare("SELECT * FROM pageviews WHERE visitor_id = ? ORDER BY created_at DESC LIMIT 300")
-    .all(visitorId);
-
-  const events = db
-    .prepare("SELECT * FROM events WHERE visitor_id = ? ORDER BY created_at DESC LIMIT 300")
-    .all(visitorId);
+  const [sessions, pageviews, events] = await Promise.all([
+    col("sessions")
+      .find({ visitor_id: visitorId }, NO_ID)
+      .sort({ started_at: -1 })
+      .limit(100)
+      .toArray(),
+    col("pageviews")
+      .find({ visitor_id: visitorId })
+      .sort({ created_at: -1, _id: -1 })
+      .limit(300)
+      .toArray(),
+    col("events")
+      .find({ visitor_id: visitorId })
+      .sort({ created_at: -1, _id: -1 })
+      .limit(300)
+      .toArray(),
+  ]);
 
   const sessionIds = sessions.map((s) => s.session_id);
-  const placeholders = sessionIds.map(() => "?").join(", ");
+  const fromSessions = { session_id: { $in: sessionIds } };
 
-  const submissions = sessionIds.length
-    ? {
-        students: db
-          .prepare(`SELECT * FROM students WHERE session_id IN (${placeholders})`)
-          .all(...sessionIds),
-        enquiries: db
-          .prepare(`SELECT * FROM enquiries WHERE session_id IN (${placeholders})`)
-          .all(...sessionIds),
-      }
-    : { students: [], enquiries: [] };
+  const [students, enquiries] = sessionIds.length
+    ? await Promise.all([
+        col("students").find(fromSessions, NO_ID).toArray(),
+        col("enquiries").find(fromSessions, NO_ID).toArray(),
+      ])
+    : [[], []];
 
   return {
     visitor,
-    sessions,
-    pageviews,
-    events: events.map((e) => ({ ...e, meta: safeParse(e.meta) })),
-    submissions,
+    sessions: sessions.map((s) => ({ ...s, engaged: isEngaged(s) ? 1 : 0 })),
+    pageviews: pageviews.map(withId),
+    events: events.map(withId),
+    submissions: { students, enquiries },
   };
 }
 
 /** The "happening now" strip: sessions seen in the last five minutes. */
-export function liveNow() {
-  const row = db
-    .prepare(
-      `SELECT COUNT(*) AS sessions, COUNT(DISTINCT visitor_id) AS visitors
-         FROM sessions WHERE last_seen_at >= datetime('now', '-5 minutes')`,
-    )
-    .get();
+export async function liveNow() {
+  const cutoff = ago(5 * 60 * 1000);
 
-  const paths = db
-    .prepare(
-      `SELECT path, COUNT(*) AS views FROM pageviews
-        WHERE created_at >= datetime('now', '-5 minutes')
-        GROUP BY path ORDER BY views DESC LIMIT 5`,
-    )
-    .all();
+  const [sessions, visitors, paths] = await Promise.all([
+    col("sessions").countDocuments({ last_seen_at: { $gte: cutoff } }),
+    col("sessions").distinct("visitor_id", { last_seen_at: { $gte: cutoff } }),
+    aggregate("pageviews", [
+      { $match: { created_at: { $gte: cutoff } } },
+      { $group: { _id: "$path", views: { $sum: 1 } } },
+      { $sort: { views: -1 } },
+      { $limit: 5 },
+      { $project: { _id: 0, path: "$_id", views: 1 } },
+    ]),
+  ]);
 
-  return { ...row, paths };
-}
-
-function safeParse(raw) {
-  try {
-    return JSON.parse(raw ?? "{}");
-  } catch {
-    return {};
-  }
+  return { sessions, visitors: visitors.length, paths };
 }

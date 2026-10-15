@@ -4,15 +4,15 @@
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { db } from "./db.js";
+import { col } from "./db.js";
 import { config } from "./env.js";
 
 export function findAdminByEmail(email) {
-  return db.prepare("SELECT * FROM admins WHERE email = ?").get(String(email).toLowerCase().trim());
+  return col("admins").findOne({ email: String(email).toLowerCase().trim() });
 }
 
 export function findAdminById(id) {
-  return db.prepare("SELECT * FROM admins WHERE id = ?").get(id);
+  return col("admins").findOne({ id: Number(id) });
 }
 
 export function verifyPassword(plain, hash) {
@@ -49,7 +49,7 @@ export function publicAdmin(admin) {
  * trusted from the token, so deleting an admin — or changing their password —
  * takes effect immediately instead of when their token happens to expire.
  */
-export function requireAdmin(req, res, next) {
+export async function requireAdmin(req, res, next) {
   const header = req.get("authorization") ?? "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
 
@@ -64,11 +64,11 @@ export function requireAdmin(req, res, next) {
     return res.status(401).json({ error: "Your session has expired. Sign in again." });
   }
 
-  const admin = findAdminById(payload.sub);
+  const admin = await findAdminById(payload.sub);
   if (!admin) {
     return res.status(401).json({ error: "That account no longer exists." });
   }
-  if ((payload.v ?? 0) !== admin.token_version) {
+  if ((payload.v ?? 0) !== (admin.token_version ?? 0)) {
     return res
       .status(401)
       .json({ error: "The password for this account changed. Sign in again." });

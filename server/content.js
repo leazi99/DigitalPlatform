@@ -5,24 +5,48 @@
 // be rewritten around a new data shape — and so those files remain a usable
 // offline fallback if the API is down.
 
-import { db, getSetting } from "./db.js";
+import { col, getSettings } from "./db.js";
 
-const published = (table, extra = "") =>
-  db.prepare(`SELECT * FROM ${table} WHERE published = 1 ${extra} ORDER BY position, id`).all();
+const BY_POSITION = { position: 1, id: 1 };
 
-const ordered = (table) => db.prepare(`SELECT * FROM ${table} ORDER BY position, id`).all();
+const published = (name) => col(name).find({ published: true }).sort(BY_POSITION).toArray();
+
+const ordered = (name) => col(name).find({}).sort(BY_POSITION).toArray();
 
 function parseList(raw, fallback = []) {
-  try {
-    const parsed = JSON.parse(raw ?? "null");
-    return Array.isArray(parsed) ? parsed : fallback;
-  } catch {
-    return fallback;
-  }
+  return Array.isArray(raw) ? raw : fallback;
 }
 
-export function buildContent() {
-  const courses = published("courses");
+export async function buildContent() {
+  const [
+    settings,
+    courses,
+    allModules,
+    allBatches,
+    instructorRows,
+    faqRows,
+    statRows,
+    services,
+    processSteps,
+    testimonials,
+    outcomes,
+    audience,
+  ] = await Promise.all([
+    getSettings(),
+    published("courses"),
+    ordered("syllabus_modules"),
+    published("batches"),
+    published("instructors"),
+    ordered("faqs"),
+    ordered("stats"),
+    ordered("services"),
+    ordered("process_steps"),
+    published("testimonials"),
+    ordered("outcomes"),
+    ordered("audience"),
+  ]);
+
+  const getSetting = (key, fallback) => settings[key] ?? fallback;
 
   // The site is built around one course. The admin can keep several — a draft
   // of next year's, say — so the one shown is the first published course in
@@ -33,14 +57,10 @@ export function buildContent() {
   // A module or batch with no course attached belongs to whichever course is
   // live. That keeps the seeded content working and means a new module does
   // not vanish because its course was left blank.
-  const belongsToLiveCourse = (row) => row.course_id === null || row.course_id === courseId;
+  const belongsToLiveCourse = (row) => row.course_id == null || row.course_id === courseId;
 
-  const modules = ordered("syllabus_modules").filter(belongsToLiveCourse);
-  const batchRows = published("batches").filter(belongsToLiveCourse);
-  const instructorRows = published("instructors");
-
-  const faqRows = ordered("faqs");
-  const statRows = ordered("stats");
+  const modules = allModules.filter(belongsToLiveCourse);
+  const batchRows = allBatches.filter(belongsToLiveCourse);
 
   return {
     company: getSetting("company", {}),
@@ -62,15 +82,15 @@ export function buildContent() {
         })),
       services: {
         ...getSetting("agency.servicesIntro", {}),
-        items: ordered("services").map((s) => ({ name: s.name, body: s.body, glyph: s.glyph })),
+        items: services.map((s) => ({ name: s.name, body: s.body, glyph: s.glyph })),
       },
       process: {
         ...getSetting("agency.processIntro", {}),
-        steps: ordered("process_steps").map((s) => ({ title: s.title, body: s.body })),
+        steps: processSteps.map((s) => ({ title: s.title, body: s.body })),
       },
       testimonials: {
         ...getSetting("agency.testimonialsIntro", {}),
-        items: published("testimonials").map((t) => ({
+        items: testimonials.map((t) => ({
           quote: t.quote,
           name: t.name,
           role: t.role,
@@ -104,7 +124,7 @@ export function buildContent() {
 
       outcomes: {
         ...getSetting("institute.outcomesIntro", {}),
-        items: ordered("outcomes").map((o) => ({ title: o.title, body: o.body, glyph: o.glyph })),
+        items: outcomes.map((o) => ({ title: o.title, body: o.body, glyph: o.glyph })),
       },
       syllabus: {
         ...getSetting("institute.syllabusIntro", {}),
@@ -117,7 +137,7 @@ export function buildContent() {
       },
       audience: {
         ...getSetting("institute.audienceIntro", {}),
-        items: ordered("audience").map((a) => ({ title: a.title, body: a.body })),
+        items: audience.map((a) => ({ title: a.title, body: a.body })),
       },
       batches: batchRows.map((b) => ({
         id: b.id,
