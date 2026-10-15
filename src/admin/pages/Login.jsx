@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminAuth } from "../useAdminAuth";
-import { Alert, Btn, FormField, Input } from "../ui";
+import { Alert, Btn, FormField, Input, PasswordInput } from "../ui";
 
 export default function Login() {
   const { signIn } = useAdminAuth();
@@ -56,9 +56,8 @@ export default function Login() {
           </FormField>
 
           <FormField label="Password" htmlFor="admin-password">
-            <Input
+            <PasswordInput
               id="admin-password"
-              type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"

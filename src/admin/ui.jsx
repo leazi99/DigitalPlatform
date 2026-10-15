@@ -151,6 +151,44 @@ export function Input({ className = "", invalid, ...rest }) {
   return <input className={`${inputClass} ${invalid ? "border-red-500" : ""} ${className}`} {...rest} />;
 }
 
+/** A password input with an eye button that shows or hides what was typed. */
+export function PasswordInput({ className = "", invalid, ...rest }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="relative">
+      <input
+        {...rest}
+        type={visible ? "text" : "password"}
+        className={`${inputClass} pr-11 ${invalid ? "border-red-500" : ""} ${className}`}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+        aria-controls={rest.id}
+        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-ink-soft transition-colors hover:text-ink focus-visible:text-signal focus-visible:outline-none"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+          <circle cx="12" cy="12" r="3" />
+          {visible && <path d="M3 3l18 18" />}
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export function Textarea({ className = "", invalid, rows = 4, ...rest }) {
   return (
     <textarea

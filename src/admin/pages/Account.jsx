@@ -12,6 +12,7 @@ import {
   Input,
   Loading,
   Page,
+  PasswordInput,
   TD,
   TH,
   Table,
@@ -85,9 +86,8 @@ function ChangePassword() {
         )}
 
         <FormField label="Current password" error={fields.current} htmlFor="pw-current">
-          <Input
+          <PasswordInput
             id="pw-current"
-            type="password"
             value={current}
             onChange={(event) => setCurrent(event.target.value)}
             autoComplete="current-password"
@@ -96,9 +96,8 @@ function ChangePassword() {
         </FormField>
 
         <FormField label="New password" hint="8 characters or more" error={fields.next} htmlFor="pw-next">
-          <Input
+          <PasswordInput
             id="pw-next"
-            type="password"
             value={next}
             onChange={(event) => setNext(event.target.value)}
             autoComplete="new-password"
@@ -107,9 +106,8 @@ function ChangePassword() {
         </FormField>
 
         <FormField label="New password again" error={fields.again} htmlFor="pw-again">
-          <Input
+          <PasswordInput
             id="pw-again"
-            type="password"
             value={again}
             onChange={(event) => setAgain(event.target.value)}
             autoComplete="new-password"
