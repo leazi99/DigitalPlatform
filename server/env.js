@@ -12,12 +12,48 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 export const root = resolve(here, "..");
 
+// Names the connection string commonly ends up under — Vercel's own MongoDB
+// Atlas integration, other hosts' conventions, and plain typos of habit.
+const MONGO_NAMES = [
+  "MONGODB_URI",
+  "MONGODB_URL",
+  "MONGO_URI",
+  "MONGO_URL",
+  "MONGODB_CONNECTION_STRING",
+  "ATLAS_URI",
+  "DATABASE_URL",
+];
+
+/**
+ * The first connection string set under any of those names, cleaned of what a
+ * paste into a dashboard tends to drag along: surrounding quotes, whitespace,
+ * or the whole `MONGODB_URI=…` line copied from a .env file.
+ */
+function readMongoUri() {
+  for (const name of MONGO_NAMES) {
+    const raw = process.env[name];
+    if (!raw) continue;
+    const value = raw
+      .trim()
+      .replace(/^[A-Z_]+\s*=\s*/, "")
+      .replace(/^["'`]+|["'`]+$/g, "")
+      .trim();
+    // DATABASE_URL is often some other database's; only take it if it is Mongo.
+    if (name === "DATABASE_URL" && !/^mongodb(\+srv)?:\/\//.test(value)) continue;
+    if (value) return { name, value };
+  }
+  return { name: null, value: "" };
+}
+
+const mongo = readMongoUri();
+
 export const config = {
   port: Number(process.env.PORT ?? 4000),
 
   // MongoDB Atlas connection string (mongodb+srv://…). The database lives
   // outside the server, so it survives deploys and serverless cold starts.
-  mongoUri: (process.env.MONGODB_URI ?? "").trim(),
+  mongoUri: mongo.value,
+  mongoUriName: mongo.name,
   mongoDb: process.env.MONGODB_DB?.trim() || "digitalworld",
 
   // Signs admin session tokens. Change it and every admin is logged out,
@@ -62,6 +98,14 @@ export function assertConfig() {
   const missing = [];
   if (!config.mongoUri) {
     missing.push("MONGODB_URI (your MongoDB Atlas connection string)");
+  } else if (!/^mongodb(\+srv)?:\/\//.test(config.mongoUri)) {
+    missing.push(
+      `${config.mongoUriName} — it must start with mongodb+srv:// (copy it from Atlas → Connect → Drivers)`,
+    );
+  } else if (/<(db_)?password>/i.test(config.mongoUri)) {
+    missing.push(
+      `${config.mongoUriName} — it still contains the <password> placeholder; put your database user's real password there`,
+    );
   }
   if (!config.jwtSecret || config.jwtSecret.length < 32) {
     missing.push("JWT_SECRET (at least 32 characters)");
@@ -76,7 +120,7 @@ export function assertConfig() {
     // missing instead.
     if (process.env.VERCEL) {
       const error = new Error(
-        `The admin API cannot start. Set these in Vercel → Settings → Environment Variables, then redeploy: ${missing.join(", ")}.`,
+        `The admin API cannot start. Set these in Vercel → Settings → Environment Variables, then redeploy: ${missing.join(", ")}. ${describeVercelEnv()}`,
       );
       error.expose = true;
       throw error;
@@ -94,4 +138,21 @@ export function assertConfig() {
     );
     process.exit(1);
   }
+}
+
+/**
+ * Which Vercel environment this is, and which of our settings it can see —
+ * names only, never values. A variable saved for "Preview" but not
+ * "Production", or added without a redeploy, shows up here as absent.
+ */
+function describeVercelEnv() {
+  const ours = /^(MONGO|ATLAS|DATABASE_URL|JWT_|ADMIN_|SESSION_)/;
+  const seen = Object.keys(process.env)
+    .filter((name) => ours.test(name) && process.env[name])
+    .sort();
+  return [
+    `This deployment is the "${process.env.VERCEL_ENV ?? "unknown"}" environment`,
+    `and can see: ${seen.length ? seen.join(", ") : "none of the app's settings"}.`,
+    "Make sure each variable has this environment ticked, and redeploy after saving.",
+  ].join(" ");
 }

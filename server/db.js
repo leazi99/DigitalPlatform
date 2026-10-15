@@ -26,10 +26,35 @@ export async function connect() {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 10_000,
   });
-  await client.connect();
+  try {
+    await client.connect();
+  } catch (error) {
+    throw explainConnectError(error);
+  }
   database = client.db(config.mongoDb);
   await ensureIndexes();
   return database;
+}
+
+/** The driver's errors name the protocol failure, not the setting to fix.
+ *  These are shown on the admin sign-in screen, so they say what to change. */
+function explainConnectError(error) {
+  const text = `${error.name} ${error.message} ${error.cause?.message ?? ""}`;
+  const where = config.mongoUriName ?? "MONGODB_URI";
+  let message = null;
+
+  if (/auth|bad auth|authentication failed/i.test(text)) {
+    message = `MongoDB Atlas rejected the username or password in ${where}. In Atlas → Database Access, reset that user's password, put it in the connection string (special characters like @ : / ? # must be URL-encoded), save, and redeploy.`;
+  } else if (/ENOTFOUND|querySrv|ENODATA|EBADNAME/i.test(text)) {
+    message = `The cluster address in ${where} could not be found. Copy the connection string again from Atlas → your cluster → Connect → Drivers.`;
+  } else if (/ServerSelection|timed out|ECONNREFUSED|ETIMEDOUT|whitelist|not authorized to access/i.test(text)) {
+    message = `Could not reach the MongoDB Atlas cluster. In Atlas → Network Access, add 0.0.0.0/0 (Vercel has no fixed IP address), wait a minute for it to apply, then try again.`;
+  }
+
+  if (!message) return error;
+  const explained = new Error(`${message} (${error.message})`);
+  explained.expose = true;
+  return explained;
 }
 
 export function col(name) {
