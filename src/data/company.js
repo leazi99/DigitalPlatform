@@ -22,8 +22,9 @@ export const sectors = {
     key: "agency",
     path: "/agency",
     suffix: "Agency",
-    label: "Digital Marketing Agency",
-    blurb: "We run your social, search and paid campaigns — and show you what each one returned.",
+    label: "Digital World Pvt Ltd",
+    blurb:
+      "We run your social, search and paid campaigns — and show you what each one returned.",
     forWhom: "For business owners who want more customers.",
     cta: { label: "Get a free audit", href: "/agency#contact" },
   },
@@ -31,8 +32,9 @@ export const sectors = {
     key: "institute",
     path: "/institute",
     suffix: "Academy",
-    label: "Digital Marketing Institute",
-    blurb: "A three-month course that takes you from zero to running real campaigns for real budgets.",
+    label: "Digital World Pvt Ltd",
+    blurb:
+      "A three-month course that takes you from zero to running real campaigns for real budgets.",
     forWhom: "For students and career changers who want the skill.",
     cta: { label: "See the course", href: "/institute#syllabus" },
   },
