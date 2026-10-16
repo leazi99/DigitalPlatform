@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import Container from "../components/Container";
 import Reveal from "../components/Reveal";
-import ServiceGlyph from "../components/ServiceGlyph";
 import { useCompany, useContent } from "../content/useContent";
 
 /**
@@ -33,15 +32,15 @@ export default function LandingPage() {
         </Reveal>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2">
-          <Door sector={sectors.agency} glyph="growth" delay={200} />
-          <Door sector={sectors.institute} glyph="search" delay={280} />
+          <Door sector={sectors.agency} image="/agency.png" delay={200} />
+          <Door sector={sectors.institute} image="/institute.png" delay={280} />
         </div>
       </Container>
     </section>
   );
 }
 
-function Door({ sector, glyph, delay }) {
+function Door({ sector, image, delay }) {
   const company = useCompany();
 
   return (
@@ -51,9 +50,8 @@ function Door({ sector, glyph, delay }) {
         className="group flex h-full flex-col justify-between rounded-2xl border border-rule bg-white/70 p-8 transition duration-200 hover:-translate-y-1 hover:border-signal sm:p-10"
       >
         <div>
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal/12 text-signal-deep transition-colors group-hover:bg-signal group-hover:text-white">
-            <ServiceGlyph name={glyph} className="h-6 w-6" />
-          </span>
+          {/* Decorative: the heading below already names the sector. */}
+          <img src={image} alt="" className="h-12 w-12 object-contain" />
           <p className="mt-7 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">
             {sector.label}
           </p>
