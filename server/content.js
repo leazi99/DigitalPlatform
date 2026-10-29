@@ -205,7 +205,6 @@ export const settingsSchema = {
     map: ["agency", "institute"],
     fields: [
       { name: "suffix", label: "Wordmark suffix", type: "text" },
-      { name: "label", label: "Label", type: "text" },
       { name: "blurb", label: "Blurb", type: "long" },
       { name: "forWhom", label: "Who it is for", type: "text" },
     ],

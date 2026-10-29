@@ -4,6 +4,8 @@ import Logo from "../components/Logo";
 import { useContent } from "../content/useContent";
 import { useSector } from "./useSector";
 import { openConsent } from "../lib/consent";
+import { sectorName } from "../data/company";
+import BrandName from "../components/BrandName";
 
 export default function Footer() {
   const { company, sectors, socials } = useContent();
@@ -18,7 +20,7 @@ export default function Footer() {
               <Logo tone="light" />
             </Link>
             <p className="mt-6 leading-relaxed text-white/60">
-              Two sides of the same business: campaigns run for you, and the course that
+              <BrandName tone="light" className="text-base" /> — two sides of the same business: campaigns run for you, and the course that
               teaches you to run them yourself.
             </p>
             <a
@@ -36,7 +38,7 @@ export default function Footer() {
                 {Object.values(sectors).map((s) => (
                   <li key={s.key}>
                     <Link to={s.path} className="text-white/75 transition-colors hover:text-signal">
-                      {s.suffix}
+                      {sectorName(s)}
                     </Link>
                   </li>
                 ))}

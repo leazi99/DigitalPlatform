@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Container from "../components/Container";
 import Reveal from "../components/Reveal";
 import GrowthCurve from "../components/GrowthCurve";
+import BrandName from "../components/BrandName";
 import { intro } from "../data/intro";
 import { getConsent, openConsent } from "../lib/consent";
 
@@ -27,7 +28,10 @@ export default function IntroPage() {
         <Container className="relative grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           <div>
             <Reveal>
-              <p className="eyebrow text-signal-deep">{intro.eyebrow}</p>
+              <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <BrandName />
+                <span className="eyebrow text-signal-deep">{intro.eyebrow}</span>
+              </p>
             </Reveal>
             <Reveal delay={70}>
               <h1 className="mt-5 font-display text-display font-extrabold uppercase text-ink">

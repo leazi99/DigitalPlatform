@@ -1,4 +1,5 @@
 import Container from "../../components/Container";
+import BrandName from "../../components/BrandName";
 import Button from "../../components/Button";
 import GrowthCurve from "../../components/GrowthCurve";
 import { useInstitute } from "../../content/useContent";
@@ -14,7 +15,8 @@ export default function Hero() {
       <Container className="relative">
         <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)] lg:gap-14">
           <div className="min-w-0">
-            <p className="eyebrow inline-flex items-center gap-2.5 text-signal-deep">
+            <BrandName className="block" />
+            <p className="eyebrow mt-2 inline-flex items-center gap-2.5 text-signal-deep">
               <span className="h-1.5 w-1.5 rounded-full bg-signal" />
               {hero.eyebrow}
             </p>

@@ -11,6 +11,11 @@
   --color-signal-deep: #0a6e8c;
   --color-rule: #cbd9e0;
 
+  /* The blue of the logo's lettering. Used only for the company name itself,
+     so "Digital World" reads as the brand wherever it appears. */
+  --color-brand: #3c64a0;
+  --color-brand-light: #9dbbe6;
+
   --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;

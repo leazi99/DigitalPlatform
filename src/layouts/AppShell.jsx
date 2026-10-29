@@ -6,6 +6,7 @@ import { useContent } from "../content/useContent";
 import { useSector } from "./useSector";
 import { startTracking, trackPageview } from "../lib/track";
 import { useConsent } from "../lib/consent";
+import { sectorName } from "../data/company";
 import CookieConsent from "../components/CookieConsent";
 
 /**
@@ -24,7 +25,7 @@ export default function AppShell() {
   // admin panel files each page view under — with a single shared title every
   // row in that report reads the same and tells nobody anything.
   const title = sector
-    ? `${company.short} ${sector.suffix} — ${sector.label}`
+    ? `${sectorName(sector)} — ${company.short}`
     : `${company.name} — ${company.tagline}`;
 
   useEffect(() => {

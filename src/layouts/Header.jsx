@@ -4,6 +4,7 @@ import Container from "../components/Container";
 import Logo from "../components/Logo";
 import Button from "../components/Button";
 import { useSector } from "./useSector";
+import { sectorName } from "../data/company";
 
 export default function Header() {
   const sector = useSector();
@@ -41,7 +42,7 @@ export default function Header() {
 
         {sector && (
           <>
-            <nav aria-label="Main" className="hidden items-center gap-8 lg:flex">
+            <nav aria-label="Main" className="hidden items-center gap-6 lg:flex xl:gap-8">
               {sector.nav.map((item) => (
                 <a
                   key={item.href}
@@ -54,8 +55,12 @@ export default function Header() {
             </nav>
 
             <div className="hidden items-center gap-5 md:flex">
-              <SectorSwitch to={sector.other} />
-              <Button href={sector.cta.href}>{sector.cta.label}</Button>
+              {/* Hidden where the full nav and the full sector name do not both fit;
+                  the footer links both sectors at every width. */}
+              <SectorSwitch to={sector.other} className="lg:hidden xl:flex" />
+              <Button href={sector.cta.href} className="whitespace-nowrap">
+                {sector.cta.label}
+              </Button>
             </div>
 
             <button
@@ -95,7 +100,7 @@ export default function Header() {
               onClick={() => setOpen(false)}
               className="mt-4 text-center font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft"
             >
-              Looking for the {sector.other.suffix.toLowerCase()}? →
+              Looking for the {sectorName(sector.other)}? →
             </Link>
           </Container>
         </div>
@@ -105,13 +110,13 @@ export default function Header() {
 }
 
 /** The persistent door to the other side of the business. */
-function SectorSwitch({ to }) {
+function SectorSwitch({ to, className = "" }) {
   return (
     <Link
       to={to.path}
-      className="group flex items-center gap-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft transition-colors hover:text-ink"
+      className={`group flex items-center gap-1.5 whitespace-nowrap font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft transition-colors hover:text-ink ${className}`}
     >
-      {to.suffix}
+      {sectorName(to)}
       <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">
         →
       </span>

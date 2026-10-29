@@ -16,13 +16,20 @@ export const company = {
   hours: "Sun–Fri, 10am – 6pm", // REPLACE — real opening hours
 };
 
+// What each sector is called: "Digital Marketing" plus its suffix. The company
+// name is shown beside it, in the brand colour, rather than inside it.
+export const sectorPrefix = "Digital Marketing";
+
+export function sectorName(sector) {
+  return `${sectorPrefix} ${sector.suffix}`;
+}
+
 // The two sectors. Used by the landing page and the header switcher.
 export const sectors = {
   agency: {
     key: "agency",
     path: "/agency",
     suffix: "Agency",
-    label: "Digital World Pvt Ltd",
     blurb:
       "We run your social, search and paid campaigns — and show you what each one returned.",
     forWhom: "For business owners who want more customers.",
@@ -32,7 +39,6 @@ export const sectors = {
     key: "institute",
     path: "/institute",
     suffix: "Academy",
-    label: "Digital World Pvt Ltd",
     blurb:
       "A three-month course that takes you from zero to running real campaigns for real budgets.",
     forWhom: "For students and career changers who want the skill.",

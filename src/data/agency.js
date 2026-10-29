@@ -15,7 +15,7 @@ export const nav = [
 ];
 
 export const hero = {
-  eyebrow: "Digital marketing agency",
+  eyebrow: "Digital Marketing Agency",
   lines: ["Digital", "Marketing", "Agency"],
   lead: "We run the social, search and paid campaigns that bring customers to your business — and we show you exactly what each one returned.",
   primaryCta: { label: "Get a free audit", href: "#contact" },

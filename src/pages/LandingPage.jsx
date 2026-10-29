@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import Container from "../components/Container";
 import Reveal from "../components/Reveal";
-import { useCompany, useContent } from "../content/useContent";
+import BrandName from "../components/BrandName";
+import { useContent } from "../content/useContent";
+import { sectorPrefix } from "../data/company";
 
 /**
  * The fork in the road. Deliberately thin — no stats, no testimonials, no
@@ -41,8 +43,6 @@ export default function LandingPage() {
 }
 
 function Door({ sector, image, delay }) {
-  const company = useCompany();
-
   return (
     <Reveal delay={delay}>
       <Link
@@ -52,11 +52,11 @@ function Door({ sector, image, delay }) {
         <div>
           {/* Decorative: the heading below already names the sector. */}
           <img src={image} alt="" className="h-12 w-12 object-contain" />
-          <p className="mt-7 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">
-            {sector.label}
+          <p className="mt-7">
+            <BrandName />
           </p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            {company.short} <span className="text-signal">{sector.suffix}</span>
+          <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+            {sectorPrefix} <span className="text-signal">{sector.suffix}</span>
           </h2>
           <p className="mt-4 leading-relaxed text-ink-soft">{sector.blurb}</p>
         </div>

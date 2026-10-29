@@ -17,7 +17,7 @@ export const nav = [
 ];
 
 export const hero = {
-  eyebrow: "Digital marketing institute",
+  eyebrow: "Digital Marketing Academy",
   lines: ["Learn to", "run the", "campaigns"],
   lead: "A three-month, hands-on digital marketing course taught by the people who run campaigns for a living. You finish with a portfolio, not just a certificate.",
   primaryCta: { label: "Enrol now", href: "#enrol" },
