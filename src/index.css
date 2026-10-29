@@ -87,6 +87,23 @@
   transform: none;
 }
 
+/* Intro poster tags rise in one after another, once the curve has drawn. */
+.poster-tag {
+  opacity: 0;
+  animation: poster-tag-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes poster-tag-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

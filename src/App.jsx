@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppShell from "./layouts/AppShell";
+import IntroPage from "./pages/IntroPage";
 import LandingPage from "./pages/LandingPage";
 import { ContentProvider } from "./content/ContentProvider";
 
@@ -23,7 +24,8 @@ export default function App() {
           <Route path="/admin/*" element={<AdminApp />} />
 
           <Route element={<AppShell />}>
-            <Route index element={<LandingPage />} />
+            <Route index element={<IntroPage />} />
+            <Route path="home" element={<LandingPage />} />
             <Route path="agency" element={<AgencyPage />} />
             <Route path="institute" element={<InstitutePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

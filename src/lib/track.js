@@ -6,11 +6,14 @@
  * third-party script, nothing that identifies a person. The visitor id is a
  * random string the browser keeps in its own storage and can clear at will.
  *
- * A browser that sends Do Not Track is not recorded at all. That means the
- * admin's figures are a slight undercount rather than a complete one, which is
+ * Nothing is recorded until the visitor accepts analytics in the cookie dialog
+ * (./consent.js), and a browser that sends Do Not Track is not recorded at all.
+ * That means the admin's figures are an undercount rather than a complete one, which is
  * the trade this file deliberately makes — and the dashboard says so on screen
  * instead of presenting the number as the whole truth.
  */
+
+import { analyticsAllowed, subscribeConsent } from "./consent";
 
 // A production build always calls its own origin, so a dev-only VITE_API_URL
 // left in .env cannot bake http://localhost:4000 into the deployed site.
@@ -61,9 +64,28 @@ function storageWorks() {
 }
 
 function isEnabled() {
-  if (enabled === null) enabled = !optedOut() && storageWorks();
+  if (enabled === null) enabled = analyticsAllowed() && !optedOut() && storageWorks();
   return enabled;
 }
+
+// A changed choice takes effect at once. Withdrawing it stops the beats and
+// forgets the ids, so a later "yes" starts as a new visitor rather than
+// stitching the two visits together.
+subscribeConsent(() => {
+  enabled = null;
+  if (isEnabled()) return;
+  stopPinging();
+  currentPath = "";
+  pageOpenedAt = 0;
+  try {
+    for (const key of [VISITOR_KEY, SESSION_KEY, SESSION_STARTED_KEY, SESSION_SEEN_KEY]) {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    }
+  } catch {
+    /* storage blocked: there was nothing stored */
+  }
+});
 
 function randomId() {
   const bytes = new Uint8Array(12);

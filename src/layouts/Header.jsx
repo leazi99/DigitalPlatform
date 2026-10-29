@@ -32,7 +32,7 @@ export default function Header() {
     >
       <Container className="flex h-20 items-center justify-between gap-6">
         <Link
-          to={sector ? sector.path : "/"}
+          to={sector ? sector.path : "/home"}
           className="shrink-0"
           aria-label="Digital World — home"
         >

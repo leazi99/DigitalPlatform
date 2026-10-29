@@ -5,6 +5,8 @@ import Footer from "./Footer";
 import { useContent } from "../content/useContent";
 import { useSector } from "./useSector";
 import { startTracking, trackPageview } from "../lib/track";
+import { useConsent } from "../lib/consent";
+import CookieConsent from "../components/CookieConsent";
 
 /**
  * The frame both sectors sit in. Owns the header, the footer, the scroll
@@ -15,6 +17,7 @@ export default function AppShell() {
   const { pathname, hash } = useLocation();
   const { company } = useContent();
   const sector = useSector();
+  const analytics = useConsent().consent?.analytics === true;
 
   // One title per sector rather than one for the whole site. It is what a
   // browser tab, a bookmark and a search result show, and it is what the
@@ -36,16 +39,18 @@ export default function AppShell() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname, hash]);
 
+  // Nothing starts until the visitor accepts analytics in the cookie dialog;
+  // accepting part-way through a visit starts it from the page they are on.
   useEffect(() => {
-    startTracking();
-  }, []);
+    if (analytics) startTracking();
+  }, [analytics]);
 
   // One pageview per route, not per hash: following the nav to #syllabus is
   // moving within a page, not opening another one. The title goes with it, so
   // the admin's page report is readable without decoding paths.
   useEffect(() => {
-    trackPageview(pathname, title);
-  }, [pathname, title]);
+    if (analytics) trackPageview(pathname, title);
+  }, [pathname, title, analytics]);
 
   return (
     <>
@@ -62,6 +67,7 @@ export default function AppShell() {
         </Suspense>
       </main>
       <Footer />
+      <CookieConsent />
     </>
   );
 }

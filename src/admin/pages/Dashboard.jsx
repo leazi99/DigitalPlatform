@@ -161,9 +161,10 @@ export default function Dashboard() {
                         count — that is the difference this figure exists to show.
                       </p>
                       <p>
-                        Visitors whose browser asks not to be tracked are not recorded at all, and
-                        neither are obvious bots. These figures are therefore a slight undercount
-                        rather than every request the server saw.
+                        Only visitors who accept analytics in the cookie pop-up are recorded.
+                        Those who reject it, whose browser asks not to be tracked, and obvious bots
+                        are not. These figures are therefore an undercount rather than every
+                        request the server saw.
                       </p>
                       <p>
                         No IP addresses, cookies or third-party scripts are involved. A visitor is a

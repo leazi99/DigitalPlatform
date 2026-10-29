@@ -3,6 +3,7 @@ import Container from "../components/Container";
 import Logo from "../components/Logo";
 import { useContent } from "../content/useContent";
 import { useSector } from "./useSector";
+import { openConsent } from "../lib/consent";
 
 export default function Footer() {
   const { company, sectors, socials } = useContent();
@@ -13,7 +14,7 @@ export default function Footer() {
       <Container>
         <div className="flex flex-col gap-12 border-b border-white/12 pb-12 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-sm">
-            <Link to="/" aria-label="Digital World — home">
+            <Link to="/home" aria-label="Digital World — home">
               <Logo tone="light" />
             </Link>
             <p className="mt-6 leading-relaxed text-white/60">
@@ -74,7 +75,16 @@ export default function Footer() {
 
         <div className="flex flex-col gap-3 pt-8 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-white/40 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {company.name}</p>
-          <p>{company.address}</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <button
+              type="button"
+              onClick={() => openConsent()}
+              className="text-left uppercase tracking-[0.14em] transition-colors hover:text-signal"
+            >
+              Cookie preferences
+            </button>
+            <p>{company.address}</p>
+          </div>
         </div>
       </Container>
     </footer>
