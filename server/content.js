@@ -130,9 +130,17 @@ export async function buildContent() {
         ...getSetting("institute.syllabusIntro", {}),
         modules: modules.map((m) => ({
           number: m.number,
+          weeks: m.weeks ?? "",
           title: m.title,
+          tagline: m.tagline ?? "",
+          glyph: m.glyph ?? "growth",
+          poster: m.poster ?? "",
           body: m.body,
           topics: parseList(m.topics),
+          frameworkName: m.framework_name ?? "",
+          framework: parseList(m.framework),
+          practice: m.practice ?? "",
+          project: m.project ?? "",
         })),
       },
       audience: {

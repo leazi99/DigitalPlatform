@@ -126,16 +126,7 @@ async function seedLists() {
     courseId = first?.id ?? null;
   }
 
-  await seedList(
-    "syllabus_modules",
-    institute.syllabus.modules.map((m) => ({
-      course_id: courseId,
-      number: m.number,
-      title: m.title,
-      body: m.body,
-      topics: m.topics ?? [],
-    })),
-  );
+  await seedList("syllabus_modules", syllabusRows(courseId));
 
   const i = institute.instructor;
   await seedList("instructors", [
@@ -202,25 +193,86 @@ async function seedLists() {
   );
 }
 
-export async function seed() {
-  await seedAdminAccount();
+/** The syllabus in `src/data/institute.js`, as database rows. */
+function syllabusRows(courseId) {
+  return institute.syllabus.modules.map((m) => ({
+    course_id: courseId,
+    number: m.number,
+    weeks: m.weeks ?? "",
+    title: m.title,
+    tagline: m.tagline ?? "",
+    glyph: m.glyph ?? "growth",
+    poster: m.poster ?? "",
+    body: m.body,
+    topics: m.topics ?? [],
+    framework_name: m.frameworkName ?? "",
+    framework: m.framework ?? [],
+    practice: m.practice ?? "",
+    project: m.project ?? "",
+  }));
+}
 
-  // Claim the content seed. Whoever inserts the marker seeds; everyone else
-  // (a parallel cold start, or any later start) skips straight past.
+/**
+ * One-off content updates for a database that was seeded before the change.
+ *
+ * Each is claimed with a marker in `counters`, like the seed itself, so it runs
+ * exactly once — later edits in the admin panel are never overwritten.
+ */
+async function migrate() {
+  await runOnce("migration:syllabus-8-modules", async () => {
+    // The 12-week course replaced the old six-module syllabus outright.
+    const first = await col("courses").findOne({}, { sort: { position: 1, id: 1 } });
+    const courseId = first?.id ?? null;
+    await col("syllabus_modules").deleteMany({});
+    const stamp = now();
+    const docs = [];
+    for (const [i, row] of syllabusRows(courseId).entries()) {
+      docs.push({ id: await nextId("syllabus_modules"), ...row, position: i, created_at: stamp, updated_at: stamp });
+    }
+    await col("syllabus_modules").insertMany(docs);
+
+    // The intro and the hero figures describe the syllabus, so they move with it
+    // — but only where they still hold the old seeded wording.
+    const intro = await getSetting("institute.syllabusIntro");
+    if (intro?.heading === "Six modules, two weeks each.") {
+      await putSetting("institute.syllabusIntro", pick(institute.syllabus, ["eyebrow", "heading", "lead"]));
+    }
+    const hero = await getSetting("institute.hero");
+    if (hero?.ticks?.some((t) => t.value === "6" && t.label === "modules")) {
+      await putSetting("institute.hero", { ...hero, ticks: institute.hero.ticks });
+    }
+    if (first && first.duration === "3 months") {
+      await col("courses").updateOne({ id: first.id }, { $set: { duration: institute.course.duration, updated_at: stamp } });
+    }
+  });
+}
+
+async function runOnce(marker, task) {
   try {
-    await col("counters").insertOne({ _id: "seed", at: now() });
+    await col("counters").insertOne({ _id: marker, at: now() });
   } catch (error) {
     if (error.code === 11000) return;
     throw error;
   }
-
   try {
-    await seedContentBlocks();
-    await seedLists();
+    await task();
   } catch (error) {
-    // Release the claim so the next start tries again, rather than leaving a
-    // half-seeded database that is never finished.
-    await col("counters").deleteOne({ _id: "seed" });
+    await col("counters").deleteOne({ _id: marker });
     throw error;
   }
+}
+
+export async function seed() {
+  await seedAdminAccount();
+
+  // Claim the content seed. Whoever inserts the marker seeds; everyone else
+  // (a parallel cold start, or any later start) skips straight past. A failed
+  // seed releases the claim so the next start tries again, rather than leaving
+  // a half-seeded database that is never finished.
+  await runOnce("seed", async () => {
+    await seedContentBlocks();
+    await seedLists();
+  });
+
+  await migrate();
 }

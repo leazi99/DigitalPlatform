@@ -5,7 +5,7 @@ import GrowthCurve from "../../components/GrowthCurve";
 import { useInstitute } from "../../content/useContent";
 
 export default function Hero() {
-  const { hero, course, batches } = useInstitute();
+  const { hero, course, batches, syllabus } = useInstitute();
   const next = batches[0];
 
   return (
@@ -73,7 +73,7 @@ export default function Hero() {
             <GrowthCurve className="w-full" />
             {course && (
               <p className="mt-2 text-center font-mono text-[0.625rem] uppercase tracking-[0.18em] text-ink-soft/70">
-                {course.duration} · six modules · one live project
+                {course.duration} · {syllabus.modules.length} modules · one live project
               </p>
             )}
           </div>

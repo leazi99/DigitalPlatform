@@ -46,9 +46,17 @@ export const resources = {
     columns: {
       course_id: { type: "ref", ref: "courses", label: "Course" },
       number: { type: "text", label: "Number" },
+      weeks: { type: "text", label: "Weeks" },
       title: { type: "text", required: true, label: "Title" },
-      body: { type: "long", label: "Summary" },
-      topics: { type: "json", default: [], label: "Topics" },
+      tagline: { type: "text", label: "Tagline" },
+      glyph: { type: "enum", values: GLYPHS(), default: "growth", label: "Poster icon" },
+      poster: { type: "text", label: "Poster headline" },
+      body: { type: "long", label: "Overview" },
+      topics: { type: "json", default: [], label: "What students will learn" },
+      framework_name: { type: "text", label: "Framework name" },
+      framework: { type: "json", default: [], label: "Framework steps (Letter – Word: meaning)" },
+      practice: { type: "long", label: "Using it in the real world" },
+      project: { type: "long", label: "Practical project" },
     },
   },
 
@@ -247,7 +255,7 @@ export const resources = {
 /** The icons `ServiceGlyph` can draw. Kept here so the admin's icon picker
  *  can only offer names that actually render. */
 function GLYPHS() {
-  return ["social", "search", "meta", "google", "click", "growth"];
+  return ["social", "search", "meta", "google", "click", "growth", "compass", "pen", "spark", "chart"];
 }
 
 export const glyphNames = GLYPHS();

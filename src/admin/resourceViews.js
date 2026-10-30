@@ -15,8 +15,8 @@ export const resourceViews = {
 
   syllabus: {
     title: "Syllabus",
-    lead: "The modules on the academy page, in the order they are taught. Each module's topics are the bullet list inside it.",
-    columns: ["number", "title", "course_id", "topics"],
+    lead: "The modules on the academy page, in the order they are taught. Each one has a poster (an icon and a headline), what students will learn, an optional framework, how the skills are used at work, and a practical project.",
+    columns: ["number", "weeks", "title", "course_id"],
     primary: "title",
     filterLabels: { course_id: "Course" },
   },
