@@ -8,6 +8,8 @@
 export const intro = {
   eyebrow: "Kathmandu, Nepal",
   headline: "Grow your business and skills through digital marketing.",
+  // Words in the headline shown in the brand blue.
+  headlineHighlights: ["business", "skills"],
   lead: "We run digital marketing for businesses, and we teach it to the people who want to do it themselves.",
   cta: { label: "See our services", href: "/home" },
 
