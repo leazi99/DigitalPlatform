@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const intro = {
-  eyebrow: "Kathmandu, Nepal",
+  eyebrow: "PVT.LTD",
   headline: "Grow your business and skills through digital marketing.",
   // Words in the headline shown in the brand blue.
   headlineHighlights: ["business", "skills"],

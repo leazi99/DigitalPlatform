@@ -28,9 +28,11 @@ export default function IntroPage() {
         <Container className="relative grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           <div>
             <Reveal>
-              <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
                 <BrandName />
-                <span className="eyebrow text-signal-deep">{intro.eyebrow}</span>
+                <span className="font-display text-sm font-bold tracking-tight text-brand">
+                  {intro.eyebrow}
+                </span>
               </p>
             </Reveal>
             <Reveal delay={70}>
