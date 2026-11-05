@@ -86,6 +86,12 @@ publicRouter.post("/enrol", rateLimit({ max: 10, windowMs: 10 * 60_000 }), async
 
   const batchName = str(body.batch, 120);
   const batch = batchName ? await col("batches").findOne({ name: batchName }) : null;
+  if (batch?.status === "closed") {
+    return res.status(422).json({
+      error: `${batch.name} is currently closed for enrolment.`,
+      fields: { batch: "This batch is closed. Choose another, or leave it for us to advise." },
+    });
+  }
   const liveCourse = await col("courses").findOne(
     { published: true },
     { sort: { position: 1, id: 1 } },

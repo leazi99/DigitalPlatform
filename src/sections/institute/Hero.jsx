@@ -5,8 +5,9 @@ import GrowthCurve from "../../components/GrowthCurve";
 import { useInstitute } from "../../content/useContent";
 
 export default function Hero() {
-  const { hero, course, batches } = useInstitute();
-  const next = batches[0];
+  const { hero, course, batches, syllabus } = useInstitute();
+  // A closed batch is not taking enrolments, so it is never advertised as next.
+  const next = batches.find((batch) => batch.status !== "closed");
 
   return (
     <section id="top" className="relative overflow-hidden pt-32 pb-20 sm:pt-40 lg:pb-28">
@@ -38,11 +39,20 @@ export default function Hero() {
 
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-ink-soft">{hero.lead}</p>
 
-            {next && (
-              <p className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-rule bg-white/70 px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">
-                <span className="h-1.5 w-1.5 rounded-full bg-signal" />
-                Next batch · {next.starts}
-              </p>
+            {(course?.duration || next) && (
+              <div className="mt-6 flex flex-wrap gap-2.5">
+                {course?.duration && (
+                  <p className="inline-flex items-center gap-2.5 rounded-full bg-ink px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-white">
+                    Course duration · {course.duration}
+                  </p>
+                )}
+                {next && (
+                  <p className="inline-flex items-center gap-2.5 rounded-full border border-rule bg-white/70 px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">
+                    <span className="h-1.5 w-1.5 rounded-full bg-signal" />
+                    Next batch · {next.starts}
+                  </p>
+                )}
+              </div>
             )}
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -73,7 +83,7 @@ export default function Hero() {
             <GrowthCurve className="w-full" />
             {course && (
               <p className="mt-2 text-center font-mono text-[0.625rem] uppercase tracking-[0.18em] text-ink-soft/70">
-                {course.duration} · six modules · one live project
+                {course.duration} · Module {syllabus.modules.length}: live business project
               </p>
             )}
           </div>

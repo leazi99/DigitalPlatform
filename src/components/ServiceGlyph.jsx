@@ -41,6 +41,36 @@ const paths = {
       <path d="M15 6h5v5" />
     </>
   ),
+  compass: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M15.5 8.5 L13.4 13.4 L8.5 15.5 L10.6 10.6 Z" />
+    </>
+  ),
+  pen: (
+    <>
+      <path d="M15 4.5 L19.5 9 L9 19.5 L4 20 L4.5 15 Z" />
+      <path d="M13 6.5 L17.5 11M13 20h7" />
+    </>
+  ),
+  spark: (
+    <>
+      <path d="M10 3.5 C10.6 8 12 9.4 16.5 10 C12 10.6 10.6 12 10 16.5 C9.4 12 8 10.6 3.5 10 C8 9.4 9.4 8 10 3.5 Z" />
+      <path d="M18 14.5v5M15.5 17h5" />
+    </>
+  ),
+  chart: (
+    <>
+      <path d="M4 4v16h16" />
+      <path d="M8 16v-4M12 16V9M16 16v-7" />
+    </>
+  ),
+  funnel: (
+    <>
+      <path d="M3.5 4.5h17l-6.5 7.5v5.5l-4 2v-7.5Z" />
+      <path d="M7 8h10" />
+    </>
+  ),
 };
 
 export default function ServiceGlyph({ name, className = "" }) {

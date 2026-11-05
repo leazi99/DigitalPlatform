@@ -128,11 +128,14 @@ function Poster() {
   return (
     <div className={`${frame} relative bg-ink p-8 text-white sm:p-10`} aria-hidden="true">
       <img src="/logo-light.png" alt="" className="h-9 w-auto" />
-      <p className="mt-8 font-display text-3xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-4xl">
-        Grow your <span className="text-signal">business</span>
-        <br />
-        and <span className="text-signal">skills</span>
-      </p>
+      <video
+        src={intro.bannerVideo}
+        className="mt-8 w-full rounded-xl"
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
       <div className="mt-6 rounded-2xl bg-white/[0.04] p-2">
         <GrowthCurve className="w-full" />
       </div>
