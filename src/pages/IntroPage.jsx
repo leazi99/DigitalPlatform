@@ -35,7 +35,7 @@ export default function IntroPage() {
             </Reveal>
             <Reveal delay={70}>
               <h1 className="mt-5 font-display text-display font-extrabold uppercase text-ink">
-                {intro.headline}
+                <Highlighted text={intro.headline} words={intro.headlineHighlights} />
               </h1>
             </Reveal>
             <Reveal delay={140}>
@@ -81,6 +81,18 @@ export default function IntroPage() {
         </Container>
       </section>
     </>
+  );
+}
+
+function Highlighted({ text, words = [] }) {
+  return text.split(/(\s+)/).map((part, i) =>
+    words.includes(part.toLowerCase()) ? (
+      <span key={i} className="text-signal">
+        {part}
+      </span>
+    ) : (
+      part
+    )
   );
 }
 
