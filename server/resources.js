@@ -55,8 +55,10 @@ export const resources = {
       topics: { type: "json", default: [], label: "What students will learn" },
       framework_name: { type: "text", label: "Framework name" },
       framework: { type: "json", default: [], label: "Framework steps (Letter – Word: meaning)" },
-      practice: { type: "long", label: "Using it in the real world" },
+      tools: { type: "json", default: [], label: "Tools and platforms" },
+      activities: { type: "json", default: [], label: "Practical activities" },
       project: { type: "long", label: "Practical project" },
+      practice: { type: "long", label: "Real-world value" },
     },
   },
 
@@ -255,7 +257,7 @@ export const resources = {
 /** The icons `ServiceGlyph` can draw. Kept here so the admin's icon picker
  *  can only offer names that actually render. */
 function GLYPHS() {
-  return ["social", "search", "meta", "google", "click", "growth", "compass", "pen", "spark", "chart"];
+  return ["social", "search", "meta", "google", "click", "growth", "compass", "pen", "spark", "chart", "funnel"];
 }
 
 export const glyphNames = GLYPHS();

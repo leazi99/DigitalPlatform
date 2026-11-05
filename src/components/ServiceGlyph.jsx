@@ -65,6 +65,12 @@ const paths = {
       <path d="M8 16v-4M12 16V9M16 16v-7" />
     </>
   ),
+  funnel: (
+    <>
+      <path d="M3.5 4.5h17l-6.5 7.5v5.5l-4 2v-7.5Z" />
+      <path d="M7 8h10" />
+    </>
+  ),
 };
 
 export default function ServiceGlyph({ name, className = "" }) {

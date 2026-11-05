@@ -7,7 +7,7 @@ import { useInstitute } from "../../content/useContent";
 const STATUS = {
   open: { label: "Open", className: "bg-signal/12 text-signal-deep" },
   filling: { label: "Filling fast", className: "bg-amber-500/15 text-amber-700" },
-  closed: { label: "Closed", className: "bg-ink/8 text-ink-soft" },
+  closed: { label: "Currently closed", className: "bg-ink/8 text-ink-soft" },
 };
 
 export default function Batches() {
@@ -26,6 +26,7 @@ export default function Batches() {
           <ul className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-rule bg-rule sm:grid-cols-2 lg:grid-cols-3">
             {batches.map((batch, i) => {
               const status = STATUS[batch.status] ?? STATUS.open;
+              const closed = batch.status === "closed";
               return (
                 <Reveal
                   as="li"
@@ -34,7 +35,9 @@ export default function Batches() {
                   className="flex flex-col bg-mist p-8 transition-colors duration-300 hover:bg-white"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <h3 className="font-display text-xl font-extrabold tracking-tight text-ink">
+                    <h3
+                      className={`font-display text-xl font-extrabold tracking-tight ${closed ? "text-ink-soft" : "text-ink"}`}
+                    >
                       {batch.name}
                     </h3>
                     <span
@@ -60,9 +63,15 @@ export default function Batches() {
                   </dl>
 
                   <div className="mt-auto pt-8">
-                    <Button href="#enrol" variant="outline" className="w-full">
-                      Hold a seat
-                    </Button>
+                    {closed ? (
+                      <p className="rounded-full border border-dashed border-rule px-6 py-3 text-center text-sm font-semibold text-ink-soft">
+                        {batch.name} – Currently closed for enrolment
+                      </p>
+                    ) : (
+                      <Button href="#enrol" variant="outline" className="w-full">
+                        Hold a seat
+                      </Button>
+                    )}
                   </div>
                 </Reveal>
               );
@@ -74,7 +83,7 @@ export default function Batches() {
               <Button href="#enrol">Register your interest</Button>
               {course && (
                 <p className="text-[0.9375rem] text-ink-soft">
-                  Fee for the {course.duration} course: {course.fee}
+                  {course.duration} · Fee: {course.fee}
                 </p>
               )}
             </div>

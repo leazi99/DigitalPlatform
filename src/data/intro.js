@@ -16,6 +16,9 @@ export const intro = {
   // the page draws its own animated banner instead.
   poster: "", // REPLACE — the animated poster shared in the group
 
+  // The wide banner video played across the top of the drawn poster.
+  bannerVideo: "/digital.mp4",
+
   sections: [
     {
       title: "What is Digital World?",
@@ -27,7 +30,7 @@ export const intro = {
     },
     {
       title: "How do we work?",
-      body: "For businesses: audit, strategy, execution and a monthly report on what each campaign returned. For learners: a three-month, hands-on course built on real campaigns.",
+      body: "For businesses: audit, strategy, execution and a monthly report on what each campaign returned. For learners: a 12-week, 8-module hands-on course built on real campaigns.",
     },
     {
       title: "Who can benefit?",

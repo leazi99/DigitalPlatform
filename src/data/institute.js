@@ -19,21 +19,21 @@ export const nav = [
 export const hero = {
   eyebrow: "Digital Marketing Academy",
   lines: ["Learn to", "run the", "campaigns"],
-  lead: "A three-month, hands-on digital marketing course taught by the people who run campaigns for a living. You finish with a portfolio, not just a certificate.",
+  lead: "A 12-week, 8-module hands-on digital marketing course taught by the people who run campaigns for a living. You finish with a portfolio and a live business project, not just a certificate.",
   primaryCta: { label: "Enrol now", href: "#enrol" },
   secondaryCta: { label: "See the syllabus", href: "#syllabus" },
   // REPLACE — all three figures
   ticks: [
     { value: "12", label: "weeks, part-time" },
     { value: "8", label: "modules" },
-    { value: "1", label: "live client project" },
+    { value: "1", label: "live business project" },
   ],
 };
 
 // REPLACE — every field below
 export const course = {
   title: "Complete Digital Marketing",
-  duration: "12 weeks",
+  duration: "12 Weeks | 8 Modules",
   format: "Part-time · 2 hours a day, 5 days a week",
   mode: "In person in Kathmandu, or live online",
   fee: "Rs. XX,XXX", // REPLACE — real fee
@@ -45,7 +45,7 @@ export const course = {
 
 export const outcomes = {
   eyebrow: "What you leave with",
-  heading: "By the end, you can run a campaign on your own.",
+  heading: "By the end of this course, you will be able to plan, launch, manage, and measure a digital marketing campaign independently.",
   lead: "Not theory you cannot use. Every module ends with something you have actually built, and it goes in your portfolio.",
   items: [
     {
@@ -72,20 +72,22 @@ export const outcomes = {
 };
 
 // Each module has:
-//   weeks      when it is taught in the 12-week course
-//   glyph      the icon drawn on its poster (see ServiceGlyph)
-//   poster     the headline printed on its poster
-//   tagline    one line under the title
-//   body       the overview
-//   topics     what students will learn
-//   framework  optional — a named method, one step per line as
-//              "Letter – Word: what it means"
-//   practice   how the skills are used in a real job
-//   project    the practical project the module ends with
+//   weeks       when it is taught in the 12-week course
+//   glyph       the icon drawn on its poster (see ServiceGlyph)
+//   poster      the headline printed on its poster
+//   tagline     one line under the title
+//   body        the overview
+//   topics      what students will learn
+//   framework   optional — a named method, one step per line as
+//               "Letter – Word: what it means"
+//   tools       the tools and platforms students use
+//   activities  the practical activities and assignments done in class
+//   project     the practical project the module ends with
+//   practice    the real-world value of the skills
 export const syllabus = {
   eyebrow: "Syllabus",
-  heading: "Eight modules over twelve weeks.",
-  lead: "Every module is practical: you learn a skill, use it on a real brand, and finish with a project that goes in your portfolio. By week twelve you can plan, run and report on a campaign with confidence.",
+  heading: "8 modules over 12 weeks.",
+  lead: "Every module is practical: you learn a skill, use it on a real brand, and finish with a project that goes in your portfolio. The final module is a live project where students apply their digital marketing skills to a real business and prepare a professional performance report.",
   modules: [
     {
       number: "01",
@@ -103,8 +105,14 @@ export const syllabus = {
         "Set SMART goals and choose the numbers that prove success",
         "Split a small budget sensibly across channels",
       ],
-      practice: "Before any campaign at work or for a client, you will be able to ask the right questions — who is the customer, what is the goal, where should the money go — and turn the answers into a one-page plan a business owner can approve.",
+      tools: ["Google Trends", "Meta Ad Library", "Google Sheets", "Canva"],
+      activities: [
+        "Map the customer journey of a brand you have bought from",
+        "Build two buyer personas for a local business",
+        "Split a small monthly budget across channels and explain your choices",
+      ],
       project: "Write a one-page digital marketing strategy for a real local business, covering audience, goals, channels and budget.",
+      practice: "Before any campaign at work or for a client, you will be able to ask the right questions — who is the customer, what is the goal, where should the money go — and turn the answers into a one-page plan a business owner can approve.",
     },
     {
       number: "02",
@@ -122,8 +130,14 @@ export const syllabus = {
         "Manage comments, DMs and reviews professionally",
         "Read Insights to see what is working and what to change",
       ],
-      practice: "You will be able to take over a company's social media accounts, set a clear content plan, keep the brand voice consistent, and report on growth and engagement every month — one of the most in-demand entry-level skills in marketing.",
+      tools: ["Meta Business Suite", "Instagram", "TikTok", "LinkedIn", "Canva", "CapCut"],
+      activities: [
+        "Audit a brand's Facebook and Instagram pages and list five improvements",
+        "Write ten hooks and captions for one product",
+        "Design a carousel and edit a short Reel",
+      ],
       project: "Plan, design and schedule two weeks of social media content for a selected brand.",
+      practice: "You will be able to take over a company's social media accounts, set a clear content plan, keep the brand voice consistent, and report on growth and engagement every month — one of the most in-demand entry-level skills in marketing.",
     },
     {
       number: "03",
@@ -140,15 +154,21 @@ export const syllabus = {
         "Tell customer stories and use social proof",
         "Edit your own work for clarity and accuracy",
       ],
+      frameworkName: "A.I.D.A.",
       framework: [
         "A – Attention: Stop the scroll with a strong hook.",
         "I – Interest: Show why it matters to the reader.",
         "D – Desire: Make the benefit feel real and personal.",
         "A – Action: Tell them exactly what to do next.",
       ],
-      frameworkName: "A.I.D.A.",
-      practice: "Every marketing role involves writing. You will be able to write the ad, the post, the email and the web page — and explain to a client why each word is there.",
+      tools: ["Google Docs", "Grammarly", "Hemingway Editor", "WordPress", "Canva"],
+      activities: [
+        "Rewrite a weak advert using the A.I.D.A. framework",
+        "Outline a blog post that answers a real customer question",
+        "Peer-edit a classmate's landing page copy",
+      ],
       project: "Write a landing page, three ad variations and a welcome email for one product or service.",
+      practice: "Every marketing role involves writing. You will be able to write the ad, the post, the email and the web page — and explain to a client why each word is there.",
     },
     {
       number: "04",
@@ -166,8 +186,14 @@ export const syllabus = {
         "Earn quality backlinks and mentions",
         "Track rankings and traffic in Google Search Console",
       ],
-      practice: "You will be able to audit a website, find what is holding it back in Google, and make a prioritised list of fixes — a service businesses pay for every month.",
+      tools: ["Google Search Console", "Google Keyword Planner", "Google Business Profile", "PageSpeed Insights", "Ubersuggest"],
+      activities: [
+        "Research and group keywords for a local service business",
+        "Check the on-page SEO of five pages and record the fixes",
+        "Optimise a Google Business Profile listing",
+      ],
       project: "Carry out an SEO audit of a real website and write an action plan with the ten most valuable fixes.",
+      practice: "You will be able to audit a website, find what is holding it back in Google, and make a prioritised list of fixes — a service businesses pay for every month.",
     },
     {
       number: "05",
@@ -185,8 +211,14 @@ export const syllabus = {
         "Control budgets and bidding",
         "Read cost per result, ROAS and frequency — and act on them",
       ],
-      practice: "You will be able to run paid social campaigns for a business, spend its money responsibly, and explain clearly what each rupee achieved.",
+      tools: ["Meta Ads Manager", "Meta Business Manager", "Meta Pixel", "Meta Ad Library", "Canva"],
+      activities: [
+        "Set up a Business Manager account and install the Meta pixel",
+        "Build cold, warm and retargeting audiences for one offer",
+        "Read a live campaign report and recommend three changes",
+      ],
       project: "Plan and launch a small Meta ad campaign, then report on its results and the changes you would make.",
+      practice: "You will be able to run paid social campaigns for a business, spend its money responsibly, and explain clearly what each rupee achieved.",
     },
     {
       number: "06",
@@ -194,8 +226,8 @@ export const syllabus = {
       glyph: "spark",
       poster: "Work Smarter with AI",
       title: "AI Tools for Marketers",
-      tagline: "Work Faster, Think Sharper, Create More.",
-      body: "Students will learn how to use artificial intelligence tools to improve the speed, quality, and effectiveness of their digital marketing work.",
+      tagline: "Work faster, think sharper, create more.",
+      body: "Students will learn how to use artificial intelligence tools to improve the speed, quality, and effectiveness of their digital marketing work. They practise writing clear prompts, use AI to research, draft and design, and learn to check every output before it reaches a customer.",
       topics: [
         "Create advertising copy, blog posts, and marketing content using ChatGPT, Claude, and Gemini",
         "Generate visual content and short videos using AI-powered tools",
@@ -210,46 +242,72 @@ export const syllabus = {
         "C – Check: Verify facts, accuracy, and quality.",
         "E – Evaluate: Review the results and improve the output.",
       ],
-      practice: "You will be able to produce more content in less time without losing quality — drafting campaigns, researching competitors and planning content with AI, while keeping the final judgement, facts and brand voice in your own hands.",
+      tools: ["ChatGPT", "Claude", "Gemini", "Canva Magic Studio", "CapCut"],
+      activities: [
+        "Write and compare three prompts for the same advert",
+        "Fact-check and edit an AI-written blog post",
+        "Produce a short promotional video with AI tools",
+      ],
       project: "Create a 30-day AI-powered content calendar for a selected brand.",
+      practice: "You will be able to produce more content in less time without losing quality — drafting campaigns, researching competitors and planning content with AI, while keeping the final judgement, facts and brand voice in your own hands.",
     },
     {
       number: "07",
-      weeks: "Week 9",
-      glyph: "google",
-      poster: "Be There When They Search",
-      title: "Google Ads and Pay-Per-Click",
-      tagline: "Pay for intent, not just attention.",
-      body: "Students learn to reach customers at the exact moment they are searching to buy. They build Search and Display campaigns, write ads that earn the click, and keep costs under control.",
+      weeks: "Weeks 9–10",
+      glyph: "funnel",
+      poster: "Turn Clicks into Customers",
+      title: "Marketing Automation and CRM",
+      tagline: "Turn clicks into customers, automatically.",
+      body: "Students will learn how to build automated marketing systems that capture leads, nurture potential customers, improve follow-ups, and support customer retention. They connect landing pages, a CRM, email and WhatsApp into one journey, so no enquiry is forgotten.",
       topics: [
-        "Structure a Google Ads account, campaigns and ad groups",
-        "Choose keywords and match types, and add negative keywords",
-        "Write responsive search ads that earn the click",
-        "Improve landing pages and Quality Score",
-        "Set budgets and bidding strategies",
-        "Track conversions and calculate cost per lead",
+        "Map the customer journey from first contact to conversion",
+        "Understand lead scoring and lead qualification",
+        "Create landing pages and lead magnets",
+        "Connect landing pages and forms to a CRM, such as HubSpot's free tools where available",
+        "Build email marketing sequences using Mailchimp",
+        "Plan WhatsApp broadcasts and customer follow-up processes in accordance with applicable consent and messaging rules",
+        "Create automated workflows and track campaign performance through reports",
       ],
-      practice: "You will be able to set up and manage search campaigns that bring in enquiries and sales, and cut the spend that brings nothing back — a skill agencies and businesses hire for directly.",
-      project: "Build a complete Google Search campaign for a local business, with keywords, ads and a budget plan.",
+      frameworkName: "C.N.C.R.",
+      framework: [
+        "C – Capture: Attract and collect potential customer leads.",
+        "N – Nurture: Build relationships through useful content and follow-ups.",
+        "C – Convert: Turn qualified leads into customers.",
+        "R – Retain: Maintain relationships and encourage repeat business.",
+      ],
+      tools: ["HubSpot (free CRM)", "Mailchimp", "WhatsApp Business", "Google Forms", "Canva"],
+      activities: [
+        "Map a C.N.C.R. funnel for a local business",
+        "Connect a lead form to a CRM and set up a simple lead score",
+        "Write a consent-based WhatsApp follow-up script",
+      ],
+      project: "Build a working marketing funnel that includes a landing page, a five-email sequence, a WhatsApp follow-up flow, and a one-page performance report.",
+      practice: "You will be able to set up the systems that turn enquiries into paying customers — capturing every lead, following up on time without doing it all by hand, and showing a business exactly where its customers come from.",
     },
     {
       number: "08",
-      weeks: "Weeks 10–12",
+      weeks: "Weeks 11–12",
       glyph: "chart",
-      poster: "Measure, Prove, Get Hired",
-      title: "Analytics, Live Project and Career Launch",
-      tagline: "Prove the results. Launch your career.",
-      body: "Students learn to measure what their marketing achieved and explain it in plain language. They then bring every module together on a live campaign for a real business, and finish by preparing for jobs and freelance work.",
+      poster: "Your Skills. A Real Business. Measurable Results.",
+      title: "Analytics and Live Project",
+      tagline: "Apply your skills. Measure results. Prove your impact.",
+      body: "This is the final module of the course. Students apply the knowledge and skills gained throughout all eight modules by working on a real business project — setting objectives, running the work, measuring the results and presenting a professional performance report.",
       topics: [
-        "Set up Google Analytics 4 and conversion tracking",
-        "Build a monthly report a client can understand",
-        "Plan and run a live, multi-channel campaign for a real business",
-        "Present results and recommendations with confidence",
-        "Build a portfolio, CV and LinkedIn profile that get interviews",
-        "Price your services and find your first freelance clients",
+        "Set marketing objectives and define key performance indicators (KPIs)",
+        "Track website traffic, engagement, leads, conversions, and campaign performance",
+        "Interpret marketing data and identify areas for improvement",
+        "Evaluate campaign results against the original objectives",
+        "Prepare a professional marketing performance report",
+        "Present findings and recommend practical next steps for the business",
       ],
-      practice: "You will leave able to run a campaign from plan to final report, show employers real results you produced, and walk into an interview or a client meeting knowing what you can deliver.",
-      project: "Run a live campaign for a real business and present the final results report to the class.",
+      tools: ["Google Analytics 4", "Google Search Console", "Meta Ads Manager", "Looker Studio", "Google Sheets"],
+      activities: [
+        "Set objectives and KPIs for the live business brief",
+        "Build a performance dashboard that tracks those KPIs",
+        "Present your findings and recommendations to the class",
+      ],
+      project: "Work on a real business or an approved live-business brief, apply relevant digital marketing techniques, and produce a final performance report.",
+      practice: "You will finish the course with real results you produced for a real business — evidence you can show an employer or a client, and the confidence to plan, run and measure a campaign on your own.",
     },
   ],
 };
@@ -257,7 +315,7 @@ export const syllabus = {
 export const audience = {
   eyebrow: "Who it is for",
   heading: "No marketing background needed.",
-  lead: "If you can use a phone and a browser, you can start. What matters is turning up for three months.",
+  lead: "If you can use a phone and a browser, you can start. What matters is turning up for the full 12 weeks.",
   items: [
     {
       title: "Students and fresh graduates",
@@ -291,10 +349,10 @@ export const batches = [
   },
   {
     name: "Day batch",
-    starts: "Starts 1 Ashoj",
+    starts: "To be confirmed",
     timing: "1:00 – 3:00 pm · Sun–Thu",
     seats: "20 seats",
-    status: "filling",
+    status: "closed",
   },
   {
     name: "Evening batch",
@@ -308,7 +366,7 @@ export const batches = [
 export const batchesSection = {
   eyebrow: "Batches",
   heading: "Pick the hours that fit your day.",
-  lead: "Same course, same instructor, three timings. Seats are held in the order enquiries arrive.",
+  lead: "Same course, same instructor, different timings. Seats are held in the order enquiries arrive. A closed batch reopens only when a new intake is confirmed.",
   // Shown instead of the table when `batches` is empty
   emptyHeading: "The next batch is being scheduled.",
   emptyBody: "Leave your details and we will tell you the dates and the fee as soon as they are confirmed — before the seats are opened publicly.",
@@ -336,8 +394,12 @@ export const faq = {
   heading: "Before you enrol.",
   items: [
     {
+      q: "How long is the course?",
+      a: "Course Duration: 12 Weeks | 8 Modules. Classes run part-time, two hours a day, five days a week. The final module is a live project where students apply their digital marketing skills to a real business and prepare a professional performance report.",
+    },
+    {
       q: "Do I need a marketing background?",
-      a: "No. The course starts from what digital marketing is and builds up. What you do need is a laptop and the time to turn up five days a week for three months.",
+      a: "No. The course starts from what digital marketing is and builds up. What you do need is a laptop and the time to turn up five days a week for 12 weeks.",
     },
     {
       q: "Do I need my own laptop?",

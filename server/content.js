@@ -139,8 +139,10 @@ export async function buildContent() {
           topics: parseList(m.topics),
           frameworkName: m.framework_name ?? "",
           framework: parseList(m.framework),
-          practice: m.practice ?? "",
+          tools: parseList(m.tools),
+          activities: parseList(m.activities),
           project: m.project ?? "",
+          practice: m.practice ?? "",
         })),
       },
       audience: {

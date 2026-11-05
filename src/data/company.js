@@ -40,7 +40,7 @@ export const sectors = {
     path: "/institute",
     suffix: "Academy",
     blurb:
-      "A three-month course that takes you from zero to running real campaigns for real budgets.",
+      "A 12-week, 8-module course that takes you from zero to running real campaigns for real budgets.",
     forWhom: "For students and career changers who want the skill.",
     cta: { label: "See the course", href: "/institute#syllabus" },
   },

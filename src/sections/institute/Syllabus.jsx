@@ -6,14 +6,36 @@ import ServiceGlyph from "../../components/ServiceGlyph";
 import { useInstitute } from "../../content/useContent";
 
 export default function Syllabus() {
-  const { syllabus } = useInstitute();
+  const { syllabus, course } = useInstitute();
+  const last = syllabus.modules[syllabus.modules.length - 1];
 
   return (
     <section id="syllabus" className="border-y border-rule bg-mist-deep/60 py-24 sm:py-32">
       <Container>
         <SectionHeading eyebrow={syllabus.eyebrow} heading={syllabus.heading} lead={syllabus.lead} />
 
-        <div className="mt-16 overflow-hidden rounded-2xl border border-rule bg-mist px-7 sm:px-10">
+        <Reveal delay={120}>
+          <dl className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-rule bg-rule sm:grid-cols-2">
+            {course?.duration && (
+              <div className="bg-ink px-7 py-5 sm:px-8">
+                <dt className="eyebrow text-white/50">Course duration</dt>
+                <dd className="mt-1.5 font-display text-xl font-extrabold tracking-tight text-white">
+                  {course.duration}
+                </dd>
+              </div>
+            )}
+            {last && (
+              <div className="bg-mist px-7 py-5 sm:px-8">
+                <dt className="eyebrow text-ink-soft">Final module · {last.number}</dt>
+                <dd className="mt-1.5 font-display text-xl font-extrabold tracking-tight text-ink">
+                  {last.title}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </Reveal>
+
+        <div className="mt-8 overflow-hidden rounded-2xl border border-rule bg-mist px-7 sm:px-10">
           {syllabus.modules.map((module, i) => (
             <Reveal key={module.number} delay={Math.min(i, 3) * 70}>
               <Disclosure
@@ -97,20 +119,55 @@ function ModuleDetail({ module }) {
           </>
         )}
 
-        {module.practice && (
+        {module.tools?.length > 0 && (
           <>
-            <Label>Using it in the real world</Label>
-            <p className="max-w-2xl text-[0.9375rem] leading-relaxed text-ink-soft">{module.practice}</p>
+            <Label>Tools you will use</Label>
+            <ul className="flex flex-wrap gap-2">
+              {module.tools.map((tool) => (
+                <li
+                  key={tool}
+                  className="rounded-full border border-rule bg-white/70 px-3.5 py-1.5 text-[0.8125rem] font-medium text-ink"
+                >
+                  {tool}
+                </li>
+              ))}
+            </ul>
           </>
         )}
 
-        {module.project && (
-          <div className="mt-8 rounded-xl border-l-4 border-signal bg-white/70 px-5 py-4">
-            <span className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-signal-deep">
-              Practical project
-            </span>
-            <p className="mt-1.5 text-[0.9375rem] font-medium leading-relaxed text-ink">{module.project}</p>
+        {(module.activities?.length > 0 || module.project) && (
+          <div className="mt-8 rounded-xl border-l-4 border-signal bg-white/70 px-5 py-5 sm:px-6">
+            {module.activities?.length > 0 && (
+              <>
+                <span className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-signal-deep">
+                  Practical activities
+                </span>
+                <ul className="mt-3 space-y-2">
+                  {module.activities.map((activity) => (
+                    <li key={activity} className="flex items-start gap-3 text-[0.9375rem] text-ink-soft">
+                      <span aria-hidden="true" className="mt-0.5 font-bold text-signal">✓</span>
+                      {activity}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {module.project && (
+              <div className={module.activities?.length > 0 ? "mt-5 border-t border-rule pt-4" : ""}>
+                <span className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-signal-deep">
+                  Practical project
+                </span>
+                <p className="mt-1.5 text-[0.9375rem] font-medium leading-relaxed text-ink">{module.project}</p>
+              </div>
+            )}
           </div>
+        )}
+
+        {module.practice && (
+          <>
+            <Label>Real-world value</Label>
+            <p className="max-w-2xl text-[0.9375rem] leading-relaxed text-ink-soft">{module.practice}</p>
+          </>
         )}
       </div>
     </div>

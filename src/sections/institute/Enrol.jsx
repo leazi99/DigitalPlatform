@@ -83,7 +83,9 @@ export default function Enrol() {
 }
 
 function EnrolForm() {
-  const { batches, course } = useInstitute();
+  const { batches: allBatches, course } = useInstitute();
+  // A closed batch is shown on the page, but cannot be chosen here.
+  const batches = allBatches.filter((batch) => batch.status !== "closed");
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -184,7 +186,7 @@ function EnrolForm() {
           </div>
 
           {batches.length > 0 && (
-            <Field id="batch" label="Which batch suits you?" hint="Optional">
+            <Field id="batch" label="Which batch suits you?" hint="Optional" error={errors.batch}>
               <select
                 id="field-batch"
                 value={values.batch}

@@ -15,7 +15,7 @@ export const resourceViews = {
 
   syllabus: {
     title: "Syllabus",
-    lead: "The modules on the academy page, in the order they are taught. Each one has a poster (an icon and a headline), what students will learn, an optional framework, how the skills are used at work, and a practical project.",
+    lead: "The modules on the academy page, in the order they are taught. Each one has a poster (an icon and a headline), what students will learn, an optional framework, the tools students use, practical activities, a practical project and the real-world value of the skills. Keep Analytics and the Live Project last.",
     columns: ["number", "weeks", "title", "course_id"],
     primary: "title",
     filterLabels: { course_id: "Course" },

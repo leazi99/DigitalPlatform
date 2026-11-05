@@ -207,8 +207,10 @@ function syllabusRows(courseId) {
     topics: m.topics ?? [],
     framework_name: m.frameworkName ?? "",
     framework: m.framework ?? [],
-    practice: m.practice ?? "",
+    tools: m.tools ?? [],
+    activities: m.activities ?? [],
     project: m.project ?? "",
+    practice: m.practice ?? "",
   }));
 }
 
@@ -245,6 +247,100 @@ async function migrate() {
       await col("courses").updateOne({ id: first.id }, { $set: { duration: institute.course.duration, updated_at: stamp } });
     }
   });
+
+  await runOnce("migration:academy-revision-2026-11", async () => {
+    // Module 7 became Marketing Automation and CRM, Module 8 Analytics and Live
+    // Project, and every module gained tools and practical activities — so the
+    // syllabus is replaced again, as a whole.
+    await replaceSyllabus();
+
+    // The rest moves only where it still holds the wording seeded before.
+    await replaceIfUnchanged("institute.syllabusIntro", "heading", "Eight modules over twelve weeks.", () =>
+      pick(institute.syllabus, ["eyebrow", "heading", "lead"]),
+    );
+    await replaceIfUnchanged(
+      "institute.outcomesIntro",
+      "heading",
+      "By the end, you can run a campaign on your own.",
+      (current) => ({ ...current, heading: institute.outcomes.heading }),
+    );
+    await replaceIfUnchanged(
+      "institute.hero",
+      "lead",
+      "A three-month, hands-on digital marketing course taught by the people who run campaigns for a living. You finish with a portfolio, not just a certificate.",
+      (current) => ({ ...current, lead: institute.hero.lead, ticks: institute.hero.ticks }),
+    );
+    await replaceIfUnchanged(
+      "institute.audienceIntro",
+      "lead",
+      "If you can use a phone and a browser, you can start. What matters is turning up for three months.",
+      (current) => ({ ...current, lead: institute.audience.lead }),
+    );
+    await replaceIfUnchanged(
+      "institute.batchesSection",
+      "lead",
+      "Same course, same instructor, three timings. Seats are held in the order enquiries arrive.",
+      (current) => ({ ...current, lead: institute.batchesSection.lead }),
+    );
+    const sectorsNow = await getSetting("sectors");
+    if (sectorsNow?.institute?.blurb?.includes("three-month")) {
+      await putSetting("sectors", {
+        ...sectorsNow,
+        institute: { ...sectorsNow.institute, blurb: sectors.institute.blurb },
+      });
+    }
+
+    const stamp = now();
+    await col("courses").updateMany(
+      { duration: { $in: ["12 weeks", "3 months"] } },
+      { $set: { duration: institute.course.duration, updated_at: stamp } },
+    );
+
+    // The Day Batch is closed until a new intake is confirmed.
+    await col("batches").updateMany(
+      { name: { $regex: /^day batch$/i } },
+      { $set: { status: "closed", starts: "To be confirmed", updated_at: stamp } },
+    );
+
+    // FAQs: the duration question is added first; "three months" becomes 12 weeks.
+    const [durationFaq] = institute.faq.items;
+    if (!(await col("faqs").findOne({ sector: "institute", question: durationFaq.q }))) {
+      const top = await col("faqs").findOne({}, { sort: { position: 1 } });
+      await col("faqs").insertOne({
+        id: await nextId("faqs"),
+        sector: "institute",
+        question: durationFaq.q,
+        answer: durationFaq.a,
+        position: (top?.position ?? 0) - 1,
+        created_at: stamp,
+        updated_at: stamp,
+      });
+    }
+    const backgroundFaq = institute.faq.items.find((f) => f.q === "Do I need a marketing background?");
+    await col("faqs").updateMany(
+      { sector: "institute", question: backgroundFaq.q, answer: { $regex: /five days a week for three months\.$/ } },
+      { $set: { answer: backgroundFaq.a, updated_at: stamp } },
+    );
+  });
+}
+
+/** Replace every syllabus module with the ones in `src/data/institute.js`. */
+async function replaceSyllabus() {
+  const first = await col("courses").findOne({}, { sort: { position: 1, id: 1 } });
+  await col("syllabus_modules").deleteMany({});
+  const stamp = now();
+  const docs = [];
+  for (const [i, row] of syllabusRows(first?.id ?? null).entries()) {
+    docs.push({ id: await nextId("syllabus_modules"), ...row, position: i, created_at: stamp, updated_at: stamp });
+  }
+  await col("syllabus_modules").insertMany(docs);
+}
+
+/** Rewrite a settings key with `next(current)` only if `field` still holds
+ *  the seeded `oldValue` — an admin's own wording is left alone. */
+async function replaceIfUnchanged(key, field, oldValue, next) {
+  const current = await getSetting(key);
+  if (current?.[field] === oldValue) await putSetting(key, next(current));
 }
 
 async function runOnce(marker, task) {
